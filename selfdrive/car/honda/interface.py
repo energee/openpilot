@@ -134,7 +134,7 @@ class CarInterface(object):
     ret.carName = "honda"
     ret.carFingerprint = candidate
     if 0x1ef in fingerprint:
-      ret.radarName = "bosch"
+      ret.radarName = "nidec"
       ret.safetyModel = car.CarParams.SafetyModels.hondaBosch
     else:
       ret.radarName = "nidec"
@@ -220,6 +220,19 @@ class CarInterface(object):
       ret.centerToFront = ret.wheelbase * 0.37
       ret.steerRatio = 13.0
       ret.steerKp, ret.steerKi = 0.8, 0.255
+
+      ret.longitudinalKpBP = [0., 5., 35.]
+      ret.longitudinalKpV = [1.2, 0.8, 0.5]
+      ret.longitudinalKiBP = [0., 35.]
+      ret.longitudinalKiV = [0.18, 0.12]
+    elif candidate == "HONDA CIVIC HATCHBACK 2017 EX":
+      stop_and_go = True
+      ret.enableCamera = True
+      ret.mass = 2961/2.205 + std_cargo
+      ret.wheelbase = wheelbase_civic
+      ret.centerToFront = centerToFront_civic
+      ret.steerRatio = 13.0
+      ret.steerKp, ret.steerKi = 0.8, 0.24
 
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
@@ -415,7 +428,7 @@ class CarInterface(object):
     if self.CP.enableCruise and ret.vEgo < self.CP.minEnableSpeed:
       events.append(create_event('speedTooLow', [ET.NO_ENTRY]))
 
-    if self.CS.crv5g:
+    if self.CS.crv5g or self.CS.civichatch:
       if (ret.brakePressed and (not self.CS.acc_on)):
         events.append(create_event('pedalPressed', [ET.NO_ENTRY, ET.USER_DISABLE]))
     else:

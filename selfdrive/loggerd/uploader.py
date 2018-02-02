@@ -10,6 +10,7 @@ import requests
 import traceback
 import threading
 import subprocess
+import commands
 
 from collections import Counter
 from selfdrive.swaglog import cloudlog
@@ -70,7 +71,7 @@ def clear_locks(root):
 def is_on_wifi():
   # ConnectivityManager.getActiveNetworkInfo()
   result = subprocess.check_output(["service", "call", "connectivity", "2"]).strip().split("\n")
-  data = ''.join(''.join(w.decode("hex")[::-1] for w in l[14:49].split()) for l in result[1:]) 
+  data = ''.join(''.join(w.decode("hex")[::-1] for w in l[14:49].split()) for l in result[1:])
 
   return "\x00".join("WIFI") in data
 
@@ -257,28 +258,32 @@ def uploader_fn(exit_event):
 
       if exit_event.is_set():
         return
+      # kill uploads if on phone hotspot
+      bcast_id = commands.getoutput("ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $4}' | cut -f1  -d'/'")
+      if (bcast_id != "172.20.10.15"):
+        d = uploader.next_file_to_upload(upload_video)
+        if d is None:
+          break
 
-      d = uploader.next_file_to_upload(upload_video)
-      if d is None:
-        break
+        key, fn, _ = d
 
-      key, fn, _ = d
-
-      cloudlog.info("to upload %r", d)
-      success = uploader.upload(key, fn)
-      if success:
-        backoff = 0.1
+        cloudlog.info("to upload %r", d)
+        success = uploader.upload(key, fn)
+        if success:
+          backoff = 0.1
+        else:
+          cloudlog.info("backoff %r", backoff)
+          time.sleep(backoff + random.uniform(0, backoff))
+          backoff = min(backoff*2, 120)
+        cloudlog.info("upload done, success=%r", success)
       else:
-        cloudlog.info("backoff %r", backoff)
-        time.sleep(backoff + random.uniform(0, backoff))
-        backoff = min(backoff*2, 120)
-      cloudlog.info("upload done, success=%r", success)
+        cloudlog.info("connected to wifi hotspot, not uploading...")
+        time.sleep(2)
 
-    time.sleep(5)
+  time.sleep(5)
 
 def main(gctx=None):
   uploader_fn(threading.Event())
 
 if __name__ == "__main__":
   main()
-

@@ -77,7 +77,7 @@ EON = os.path.exists("/EON")
 managed_processes = {
   "uploader": "selfdrive.loggerd.uploader",
   "controlsd": "selfdrive.controls.controlsd",
-  "radard": "selfdrive.controls.radard",
+#  "radard": "selfdrive.controls.radard",
   "loggerd": ("selfdrive/loggerd", ["./loggerd"]),
   "logmessaged": "selfdrive.logmessaged",
   "tombstoned": "selfdrive.tombstoned",
@@ -89,7 +89,7 @@ managed_processes = {
   "visiond": ("selfdrive/visiond", ["./visiond"]),
   "sensord": ("selfdrive/sensord", ["./sensord"]),
   "gpsd": ("selfdrive/sensord", ["./gpsd"]),
-  "updated": "selfdrive.updated",
+  #"updated": "selfdrive.updated",
 }
 
 running = {}
@@ -420,6 +420,13 @@ def manager_thread():
     msg.thermal.freeSpace = avail
     with open("/sys/class/power_supply/battery/capacity") as f:
       msg.thermal.batteryPercent = int(f.read())
+        #limit charging
+      if msg.thermal.batteryPercent > 70:
+          os.system("echo 0 > /sys/class/power_supply/battery/charging_enabled")
+
+      elif msg.thermal.batteryPercent < 65:
+          os.system("echo 1 > /sys/class/power_supply/battery/charging_enabled")
+
     with open("/sys/class/power_supply/battery/status") as f:
       msg.thermal.batteryStatus = f.read().strip()
     with open("/sys/class/power_supply/usb/online") as f:
@@ -465,7 +472,7 @@ def manager_thread():
     should_start = should_start and avail > 0.02
 
     # require usb power
-    should_start = should_start and msg.thermal.usbOnline
+#    should_start = should_start and msg.thermal.usbOnline
 
     should_start = should_start and accepted_terms and (not do_uninstall)
 
@@ -552,7 +559,7 @@ def update_apks():
   cloudlog.info("installed apks %s" % (str(installed), ))
 
   for app in installed.iterkeys():
-    
+
     apk_path = os.path.join(BASEDIR, "apk/"+app+".apk")
     if not os.path.exists(apk_path):
       apk_path = os.path.join(BASEDIR, "apk/external/out/"+app+".apk")

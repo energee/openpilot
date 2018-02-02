@@ -124,6 +124,8 @@ class CarController(object):
     if CS.civic or CS.crv5g:
       is_fw_modified = os.getenv("DONGLE_ID") in ['b0f5a01cf604185c']
       STEER_MAX = 0x1FFF if is_fw_modified else 0x1000
+    elif CS.civichatch:
+      STEER_MAX = 0x1000
     elif CS.crv:
       STEER_MAX = 0x300  # CR-V only uses 12-bits and requires a lower value
     else:
@@ -148,12 +150,12 @@ class CarController(object):
       can_sends.append(hondacan.create_accord_steering_control(apply_steer, idx))
     else:
       idx = frame % 4
-      can_sends.extend(hondacan.create_steering_control(apply_steer, CS.crv, CS.crv5g, idx))
+      can_sends.extend(hondacan.create_steering_control(apply_steer, CS.crv, CS.crv5g, CS.civichatch, idx))
 
     # Send dashboard UI commands.
     if (frame % 10) == 0:
       idx = (frame/10) % 4
-      can_sends.extend(hondacan.create_ui_commands(pcm_speed, hud, CS.civic, CS.accord, CS.crv, CS.crv5g, idx))
+      can_sends.extend(hondacan.create_ui_commands(pcm_speed, hud, CS.civic, CS.accord, CS.crv, CS.crv5g, CS.civichatch, idx))
 
     # Send gas and brake commands.
     if not CS.steer_only:
