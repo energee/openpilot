@@ -2,7 +2,7 @@ void safety_rx_hook(CAN_FIFOMailBox_TypeDef *to_push);
 int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send);
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 
-typedef void (*safety_hook_init)();
+typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
 typedef int (*tx_hook)(CAN_FIFOMailBox_TypeDef *to_send);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
@@ -19,8 +19,10 @@ int controls_allowed = 0;
 
 // Include the actual safety policies.
 #include "safety/safety_defaults.h"
-#include "safety/safety_honda.h"
+#include "safety/safety_honda_nidec.h"
 #include "safety/safety_toyota.h"
+#include "safety/safety_gm.h"
+#include "safety/safety_honda_bosch.h"
 #include "safety/safety_elm327.h"
 
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -43,31 +45,34 @@ typedef struct {
 } safety_hook_config;
 
 #define SAFETY_NOOUTPUT 0
-#define SAFETY_HONDA 1
+#define SAFETY_HONDA_NIDEC 1
 #define SAFETY_TOYOTA 2
 #define SAFETY_TOYOTA_NOLIMITS 0x1336
+#define SAFETY_GM 3
+#define SAFETY_HONDA_BOSCH 4
 #define SAFETY_ALLOUTPUT 0x1337
 #define SAFETY_ELM327 0xE327
 
 const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NOOUTPUT, &nooutput_hooks},
-  {SAFETY_HONDA, &honda_hooks},
+  {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
   {SAFETY_TOYOTA, &toyota_hooks},
+  {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
   {SAFETY_TOYOTA_NOLIMITS, &toyota_nolimits_hooks},
+  {SAFETY_GM, &gm_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
   {SAFETY_ELM327, &elm327_hooks},
 };
 
 #define HOOK_CONFIG_COUNT (sizeof(safety_hook_registry)/sizeof(safety_hook_config))
 
-int safety_set_mode(uint16_t mode) {
+int safety_set_mode(uint16_t mode, int16_t param) {
   for (int i = 0; i < HOOK_CONFIG_COUNT; i++) {
     if (safety_hook_registry[i].id == mode) {
       current_hooks = safety_hook_registry[i].hooks;
-      if (current_hooks->init) current_hooks->init();
+      if (current_hooks->init) current_hooks->init(param);
       return 0;
     }
   }
   return -1;
 }
-

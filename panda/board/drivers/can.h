@@ -84,7 +84,8 @@ int can_err_cnt = 0;
   CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
   uint8_t bus_lookup[] = {0,1,2};
   uint8_t can_num_lookup[] = {0,1,2,-1};
-  int8_t can_forwarding[] = {-1,-1,-1,-1};
+  // Bosch: can forwarding (Move into its own file)
+  int8_t can_forwarding[] = {-1,2,1,-1};
   uint32_t can_speed[] = {5000, 5000, 5000, 333};
   #define CAN_MAX 3
 #else
@@ -199,6 +200,7 @@ void can_init_all() {
 }
 
 void can_set_gmlan(int bus) {
+  #ifdef PANDA
   if (bus == -1 || bus != can_num_lookup[3]) {
     // GMLAN OFF
     switch (can_num_lookup[3]) {
@@ -238,6 +240,7 @@ void can_set_gmlan(int bus) {
     can_num_lookup[3] = 2;
     can_init(2);
   }
+  #endif
 }
 
 // CAN error
@@ -348,11 +351,16 @@ void can_rx(uint8_t can_number) {
     #ifdef PANDA
       if (can_forwarding[bus_number] != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
-        to_send.RIR = to_push.RIR | 1; // TXRQ
-        to_send.RDTR = to_push.RDTR;
-        to_send.RDLR = to_push.RDLR;
-        to_send.RDHR = to_push.RDHR;
+        int can_id = (to_push.RIR>>21) & 0x7FF;
+        // Bosch, remove 0x33D and 0xE4 (Move into its own file)
+        if (can_id != 0xE4 && can_id != 0x33D && can_id <= 0x750) {
+          to_send.RIR = to_push.RIR | 1; // TXRQ
+          to_send.RDTR = to_push.RDTR;
+          to_send.RDLR = to_push.RDLR;
+          to_send.RDHR = to_push.RDHR;
+        }
         can_send(&to_send, can_forwarding[bus_number]);
+
       }
     #endif
 
@@ -370,6 +378,8 @@ void can_rx(uint8_t can_number) {
   }
 }
 
+#ifndef CUSTOM_CAN_INTERRUPTS
+
 void CAN1_TX_IRQHandler() { process_can(0); }
 void CAN1_RX0_IRQHandler() { can_rx(0); }
 void CAN1_SCE_IRQHandler() { can_sce(CAN1); }
@@ -382,6 +392,8 @@ void CAN2_SCE_IRQHandler() { can_sce(CAN2); }
 void CAN3_TX_IRQHandler() { process_can(2); }
 void CAN3_RX0_IRQHandler() { can_rx(2); }
 void CAN3_SCE_IRQHandler() { can_sce(CAN3); }
+#endif
+
 #endif
 
 void can_send(CAN_FIFOMailBox_TypeDef *to_push, uint8_t bus_number) {

@@ -10,7 +10,6 @@ import requests
 import traceback
 import threading
 import subprocess
-import commands
 
 from collections import Counter
 from selfdrive.swaglog import cloudlog
@@ -75,6 +74,13 @@ def is_on_wifi():
 
   return "\x00".join("WIFI") in data
 
+def on_uploadable_wifi():
+    current_ssid = None
+    current_ssid = subprocess.check_output("""dumpsys netstats | grep wlan0 | grep -m 1 wlan0 | grep -o 'networkId.*' | cut -d '"' -f 2""", shell=True)
+    if ("Mein" in current_ssid):
+        return True
+    else:
+        return False
 
 class Uploader(object):
   def __init__(self, dongle_id, access_token, root):
@@ -251,36 +257,31 @@ def uploader_fn(exit_event):
 
   while True:
 
-    upload_video = (params.get("IsUploadVideoOverCellularEnabled") != "0") or is_on_wifi()
+    upload_video = (params.get("IsUploadVideoOverCellularEnabled") != "0") or on_uploadable_wifi()
 
     backoff = 0.1
     while True:
 
       if exit_event.is_set():
         return
-      # kill uploads if on phone hotspot
-      bcast_id = commands.getoutput("ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $4}' | cut -f1  -d'/'")
-      if (bcast_id != "172.20.10.15"):
-        d = uploader.next_file_to_upload(upload_video)
-        if d is None:
-          break
 
-        key, fn, _ = d
+      d = uploader.next_file_to_upload(upload_video)
+      if d is None:
+        break
 
-        cloudlog.info("to upload %r", d)
-        success = uploader.upload(key, fn)
-        if success:
-          backoff = 0.1
-        else:
-          cloudlog.info("backoff %r", backoff)
-          time.sleep(backoff + random.uniform(0, backoff))
-          backoff = min(backoff*2, 120)
-        cloudlog.info("upload done, success=%r", success)
+      key, fn, _ = d
+
+      cloudlog.info("to upload %r", d)
+      success = uploader.upload(key, fn)
+      if success:
+        backoff = 0.1
       else:
-        cloudlog.info("connected to wifi hotspot, not uploading...")
-        time.sleep(2)
+        cloudlog.info("backoff %r", backoff)
+        time.sleep(backoff + random.uniform(0, backoff))
+        backoff = min(backoff*2, 120)
+      cloudlog.info("upload done, success=%r", success)
 
-  time.sleep(5)
+    time.sleep(5)
 
 def main(gctx=None):
   uploader_fn(threading.Event())
