@@ -137,7 +137,7 @@ class CarController(object):
     # Send CAN commands.
     can_sends = []
 
-     # Send steering command.
+    # Send steering command.
     idx = frame % 4
     can_sends.extend(hondacan.create_steering_control(apply_steer, CS.CP.carFingerprint, idx))
 
