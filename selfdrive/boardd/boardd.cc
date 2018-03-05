@@ -34,7 +34,8 @@
 #define SAFETY_NOOUTPUT  0
 #define SAFETY_HONDA_NIDEC 1
 #define SAFETY_TOYOTA 2
-#define SAFETY_HONDA_BOSCH 3
+#define SAFETY_GM 3
+#define SAFETY_HONDA_BOSCH 4
 #define SAFETY_ELM327 0xE327
 
 namespace {

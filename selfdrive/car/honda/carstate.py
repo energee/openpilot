@@ -118,7 +118,7 @@ def get_can_signals(CP):
                 ("EPB_STATE", "EPB_STATUS", 0),
                 ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0)]
   elif CP.carFingerprint == CAR.CIVIC_HATCH:
-    dbc_f = 'honda_civic_hatchback_ex_2017_can_generated.dbc'
+    dbc_f = 'honda_civic_hatchback_ex_2017_can.dbc'
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
@@ -223,8 +223,7 @@ class CarState(object):
 
     # blend in transmission speed at low speed, since it has more low speed accuracy
     self.v_weight = interp(self.v_wheel, v_weight_bp, v_weight_v)
-    speed = (1. - self.v_weight) * cp.vl["ENGINE_DATA"]['XMISSION_SPEED'] + self.v_weight * self.v_wheel
-
+    speed = (1. - self.v_weight) * cp.vl["ENGINE_DATA"]['XMISSION_SPEED'] * CV.KPH_TO_MS + self.v_weight * self.v_wheel
     if abs(speed - self.v_ego) > 2.0:  # Prevent large accelerations when car starts at non zero speed
       self.v_ego_x = np.matrix([[speed], [0.0]])
 
