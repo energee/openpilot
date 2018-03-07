@@ -28,7 +28,7 @@ def actuator_hystereses(brake, braking, brake_steady, v_ego, car_fingerprint):
     brake_steady = brake + brake_hyst_gap
   brake = brake_steady
 
-  if (car_fingerprint in (CAR.ACURA_ILX, CAR.CRV)) and brake > 0.0:
+  if (car_fingerprint in (CAR.ACURA_ILX, CAR.CRV_4G)) and brake > 0.0:
     brake += 0.15
 
   return brake, braking, brake_steady
@@ -100,6 +100,10 @@ class CarController(object):
     else:
       hud_car = 0xc0
 
+    # For lateral control only cars, send chimes as a beep.
+    if CS.CP.carFingerprint in (CAR.CRV_5G):
+      snd_beep = snd_chime
+
     #print chime, alert_id, hud_alert
     fcw_display, steer_required, acc_alert = process_hud_alert(hud_alert)
 
@@ -116,10 +120,10 @@ class CarController(object):
     # *** compute control surfaces ***
     GAS_MAX = 1004
     BRAKE_MAX = 1024/4
-    if CS.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.PILOT):
+    if CS.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.PILOT, CAR.CRV_5G):
       is_fw_modified = os.getenv("DONGLE_ID") in ['99c94dc769b5d96e']
       STEER_MAX = 0x1FFF if is_fw_modified else 0x1000
-    elif CS.CP.carFingerprint in (CAR.CRV, CAR.ACURA_RDX):
+    elif CS.CP.carFingerprint in (CAR.CRV_4G, CAR.ACURA_RDX):
       STEER_MAX = 0x3e8  # CR-V only uses 12-bits and requires a lower value (max value from energee)
     else:
       STEER_MAX = 0xF00
@@ -141,31 +145,32 @@ class CarController(object):
     idx = frame % 4
     can_sends.extend(hondacan.create_steering_control(apply_steer, CS.CP.carFingerprint, idx))
 
-    # Send gas and brake commands.
-    if (frame % 2) == 0:
-      idx = (frame / 2) % 4
-      can_sends.append(
-        hondacan.create_brake_command(apply_brake, pcm_override,
-                                      pcm_cancel_cmd, hud.chime, idx))
-      if not CS.brake_only:
-        # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
-        # This prevents unexpected pedal range rescaling
-        gas_amount = (apply_gas + GAS_OFFSET) * (apply_gas > 0)
-        can_sends.append(hondacan.create_gas_command(gas_amount, idx))
-
     # Send dashboard UI commands.
     if (frame % 10) == 0:
       idx = (frame/10) % 4
       can_sends.extend(hondacan.create_ui_commands(pcm_speed, hud, CS.CP.carFingerprint, idx))
 
-    # radar at 20Hz, but these msgs need to be sent at 50Hz on ilx (seems like an Acura bug)
-    if CS.CP.carFingerprint == CAR.ACURA_ILX:
-      radar_send_step = 2
-    else:
-      radar_send_step = 5
+    if CS.CP.carFingerprint not in (CAR.CRV_5G):
+      # Send gas and brake commands.
+      if (frame % 2) == 0:
+        idx = (frame / 2) % 4
+        can_sends.append(
+          hondacan.create_brake_command(apply_brake, pcm_override,
+                                        pcm_cancel_cmd, hud.chime, idx))
+        if not CS.brake_only:
+          # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
+          # This prevents unexpected pedal range rescaling
+          gas_amount = (apply_gas + GAS_OFFSET) * (apply_gas > 0)
+          can_sends.append(hondacan.create_gas_command(gas_amount, idx))
 
-    if (frame % radar_send_step) == 0:
-      idx = (frame/radar_send_step) % 4
-      can_sends.extend(hondacan.create_radar_commands(CS.v_ego, CS.CP.carFingerprint, idx))
+      # radar at 20Hz, but these msgs need to be sent at 50Hz on ilx (seems like an Acura bug)
+      if CS.CP.carFingerprint == CAR.ACURA_ILX:
+        radar_send_step = 2
+      else:
+        radar_send_step = 5
+
+      if (frame % radar_send_step) == 0:
+        idx = (frame/radar_send_step) % 4
+        can_sends.extend(hondacan.create_radar_commands(CS.v_ego, CS.CP.carFingerprint, idx))
 
     sendcan.send(can_list_to_can_capnp(can_sends, msgtype='sendcan').to_bytes())

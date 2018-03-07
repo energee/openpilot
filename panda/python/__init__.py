@@ -104,6 +104,7 @@ class Panda(object):
   SAFETY_NOOUTPUT = 0
   SAFETY_HONDA = 1
   SAFETY_TOYOTA = 2
+  SAFETY_HONDA_BOSCH = 4
   SAFETY_TOYOTA_NOLIMITS = 0x1336
   SAFETY_ALLOUTPUT = 0x1337
   SAFETY_ELM327 = 0xE327
@@ -315,6 +316,10 @@ class Panda(object):
   def get_version(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xd6, 0, 0, 0x40)
 
+  def is_grey(self):
+    ret = self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
+    return ret == "\x01"
+
   def get_serial(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd0, 0, 0, 0x20)
     hashsig, calc_hash = dat[0x1c:], hashlib.sha1(dat[0:0x1c]).digest()[0:4]
@@ -451,7 +456,11 @@ class Panda(object):
 
   # pulse low for wakeup
   def kline_wakeup(self):
+    if DEBUG:
+      print("kline wakeup...")
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'')
+    if DEBUG:
+      print("kline wakeup done")
 
   def kline_drain(self, bus=2):
     # drain buffer
@@ -460,19 +469,25 @@ class Panda(object):
       ret = self._handle.controlRead(Panda.REQUEST_IN, 0xe0, bus, 0, 0x40)
       if len(ret) == 0:
         break
+      elif DEBUG:
+        print("kline drain: "+str(ret).encode("hex"))
       bret += ret
     return bytes(bret)
 
   def kline_ll_recv(self, cnt, bus=2):
     echo = bytearray()
     while len(echo) != cnt:
-      echo += self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo))
-    return echo
+      ret = str(self._handle.controlRead(Panda.REQUEST_OUT, 0xe0, bus, 0, cnt-len(echo)))
+      if DEBUG and len(ret) > 0:
+        print("kline recv: "+ret.encode("hex"))
+      echo += ret
+    return str(echo)
 
   def kline_send(self, x, bus=2, checksum=True):
     def get_checksum(dat):
       result = 0
       result += sum(map(ord, dat)) if isinstance(b'dat', str) else sum(dat)
+      result = -result
       return struct.pack("B", result % 0x100)
 
     self.kline_drain(bus=bus)
@@ -480,6 +495,8 @@ class Panda(object):
       x += get_checksum(x)
     for i in range(0, len(x), 0xf):
       ts = x[i:i+0xf]
+      if DEBUG:
+        print("kline send: "+ts.encode("hex"))
       self._handle.bulkWrite(2, chr(bus).encode()+ts)
       echo = self.kline_ll_recv(len(ts), bus=bus)
       if echo != ts:
