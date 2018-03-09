@@ -129,7 +129,8 @@ def get_can_signals(CP):
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
-                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0)]
+                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
+                ("USER_BRAKE", "BRAKE_MODULE", 0)]
   elif CP.carFingerprint == CAR.ACURA_RDX:
     dbc_f = 'acura_rdx_2018_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
@@ -165,6 +166,7 @@ class CarState(object):
     self.user_gas, self.user_gas_pressed = 0., 0
     self.brake_switch_prev = 0
     self.brake_switch_ts = 0
+    self.brake_pressed_prev = 0
 
     self.cruise_buttons = 0
     self.cruise_setting = 0
@@ -279,11 +281,16 @@ class CarState(object):
     # brake switch has shown some single time step noise, so only considered when
     # switch is on for at least 2 consecutive CAN samples
     self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
-    self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
-                         (self.brake_switch and self.brake_switch_prev and \
-                         cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
-    self.brake_switch_prev = self.brake_switch
-    self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
+    if self.CP.carFingerprint in (CAR.CRV_5G):
+      self.brake_pressed = cp.vl["BRAKE_MODULE"]['USER_BRAKE']
+      #                      or (self.brake_pressed and self.brake_pressed_prev)
+      # self.brake_pressed_prev = self.brake_pressed
+    else:
+      self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
+                           (self.brake_switch and self.brake_switch_prev and \
+                           cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
+      self.brake_switch_prev = self.brake_switch
+      self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
 
     self.user_brake = cp.vl["VSA_STATUS"]['USER_BRAKE']
     self.standstill = not cp.vl["STANDSTILL"]['WHEELS_MOVING']

@@ -100,9 +100,9 @@ class CarController(object):
     else:
       hud_car = 0xc0
 
-    # For lateral control only cars, send chimes as a beep.
+    # For lateral control-only, send chimes as a beep since we don't send 0x30c
     if CS.CP.carFingerprint in (CAR.CRV_5G):
-      snd_beep = snd_chime
+      snd_beep = snd_beep if snd_beep is not 0 else snd_chime
 
     #print chime, alert_id, hud_alert
     fcw_display, steer_required, acc_alert = process_hud_alert(hud_alert)
