@@ -150,6 +150,7 @@ class CarController(object):
       idx = (frame/10) % 4
       can_sends.extend(hondacan.create_ui_commands(pcm_speed, hud, CS.CP.carFingerprint, idx))
 
+	# Only send for cars with longitudinal control.
     if CS.CP.carFingerprint not in (CAR.CRV_5G, CAR.ACCORD):
       # Send gas and brake commands.
       if (frame % 2) == 0:
@@ -172,5 +173,10 @@ class CarController(object):
       if (frame % radar_send_step) == 0:
         idx = (frame/radar_send_step) % 4
         can_sends.extend(hondacan.create_radar_commands(CS.v_ego, CS.CP.carFingerprint, idx))
+    
+    # If using stock ACC, send a cancel command to kill gas when OP disengages
+    else:
+      if pcm_cancel_cmd:
+        can_sends.append(hondacan.create_cancel_command(idx))
 
     sendcan.send(can_list_to_can_capnp(can_sends, msgtype='sendcan').to_bytes())

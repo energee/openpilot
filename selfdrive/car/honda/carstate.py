@@ -127,6 +127,7 @@ def get_can_signals(CP):
   elif CP.carFingerprint in (CAR.ACCORD, CAR.CRV_5G):
     dbc_f = 'honda_crv_ex_2017_can_generated.dbc'
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
+                ("BRAKE_PRESSED", "BRAKE_MODULE", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
                 ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
@@ -283,8 +284,6 @@ class CarState(object):
     self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
     if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
       self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
-      if self.brake_pressed:
-        print "brake_pressed" 
       # self.brake_pressed_prev = self.brake_pressed
     else:
       self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
