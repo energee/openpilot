@@ -284,14 +284,13 @@ class CarState(object):
     else:
       self.steer_override = abs(cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']) > 1200
     self.steer_torque_driver = cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']
-
+    self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
     # Different user brake message on crv_5g
     if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
       self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
     else:
       # brake switch has shown some single time step noise, so only considered when
       # switch is on for at least 2 consecutive CAN samples
-      self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
       self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
                            (self.brake_switch and self.brake_switch_prev and \
                            cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
