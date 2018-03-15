@@ -57,7 +57,8 @@ def create_steering_control(apply_steer, car_fingerprint, idx):
     commands.append(make_can_msg(0x194, msg_0x194, idx, 0))
   else:
     msg_0xe4 = struct.pack("!h", apply_steer) + ("\x80\x00" if apply_steer != 0 else "\x00\x00")
-    bus = (0,2)[car_fingerprint in (CAR.CRV_5G)]
+    # Set bus 2 for accord and new crv.
+    bus = (0,2)[car_fingerprint in (CAR.CRV_5G, CAR.ACCORD)]
     commands.append(make_can_msg(0xe4, msg_0xe4, idx, bus))
   return commands
 
@@ -68,7 +69,7 @@ def create_ui_commands(pcm_speed, hud, car_fingerprint, idx):
   bus = 0
   pcm_speed_real = np.clip(int(round(pcm_speed / 0.002759506)), 0,
                            64000)  # conversion factor from dbc file
-  if car_fingerprint in (CAR.CRV_5G):
+  if car_fingerprint in (CAR.CRV_5G, CAR.ACCORD):
     bus = 2
   else:
     msg_0x30c = struct.pack("!HBBBBB", pcm_speed_real, hud.pcm_accel,

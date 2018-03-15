@@ -124,7 +124,7 @@ def get_can_signals(CP):
   elif CP.carFingerprint == CAR.CRV_4G:
     dbc_f = 'honda_crv_touring_2016_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
-  elif CP.carFingerprint == CAR.CRV_5G:
+  elif CP.carFingerprint in (CAR.ACCORD, CAR.CRV_5G):
     dbc_f = 'honda_crv_ex_2017_can_generated.dbc'
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
@@ -251,7 +251,7 @@ class CarState(object):
     self.left_blinker_on = cp.vl["SCM_FEEDBACK"]['LEFT_BLINKER']
     self.right_blinker_on = cp.vl["SCM_FEEDBACK"]['RIGHT_BLINKER']
 
-    if self.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.CRV_5G):
+    if self.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.CRV_5G, CAR.ACCORD):
       self.park_brake = cp.vl["EPB_STATUS"]['EPB_STATE'] != 0
       self.brake_hold = cp.vl["VSA_STATUS"]['BRAKE_HOLD_ACTIVE']
       self.main_on = cp.vl["SCM_FEEDBACK"]['MAIN_ON']
@@ -281,9 +281,9 @@ class CarState(object):
     # brake switch has shown some single time step noise, so only considered when
     # switch is on for at least 2 consecutive CAN samples
     self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
-    if self.CP.carFingerprint in (CAR.CRV_5G):
-      self.brake_pressed = cp.vl["BRAKE_MODULE"]['USER_BRAKE']
-      #                      or (self.brake_pressed and self.brake_pressed_prev)
+    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
+      self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
+      print("brake_pressed") if self.brake_pressed
       # self.brake_pressed_prev = self.brake_pressed
     else:
       self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
