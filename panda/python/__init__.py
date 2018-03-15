@@ -13,8 +13,9 @@ from esptool import ESPROM, CesantaFlasher
 from flash_release import flash_release
 from update import ensure_st_up_to_date
 from serial import PandaSerial
+from isotp import isotp_send, isotp_recv
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
@@ -182,27 +183,58 @@ class Panda(object):
     except Exception:
       pass
     if not enter_bootloader:
-      self.close()
-      time.sleep(1.0)
-      success = False
-      # wait up to 15 seconds
-      for i in range(0, 15):
-        try:
-          self.connect()
-          success = True
-          break
-        except Exception:
-          print("reconnecting is taking %d seconds..." % (i+1))
-          try:
-            dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
-            dfu.recover()
-          except Exception:
-            pass
-          time.sleep(1.0)
-      if not success:
-        raise Exception("reset failed")
+      self.reconnect()
 
-  def flash(self, fn=None, code=None):
+  def reconnect(self):
+    self.close()
+    time.sleep(1.0)
+    success = False
+    # wait up to 15 seconds
+    for i in range(0, 15):
+      try:
+        self.connect()
+        success = True
+        break
+      except Exception:
+        print("reconnecting is taking %d seconds..." % (i+1))
+        try:
+          dfu = PandaDFU(PandaDFU.st_serial_to_dfu_serial(self._serial))
+          dfu.recover()
+        except Exception:
+          pass
+        time.sleep(1.0)
+    if not success:
+      raise Exception("reconnect failed")
+
+  @staticmethod
+  def flash_static(handle, code):
+    # confirm flasher is present
+    fr = handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
+    assert fr[4:8] == "\xde\xad\xd0\x0d"
+
+    # unlock flash
+    print("flash: unlocking")
+    handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
+
+    # erase sectors 1 and 2
+    print("flash: erasing")
+    handle.controlWrite(Panda.REQUEST_IN, 0xb2, 1, 0, b'')
+    handle.controlWrite(Panda.REQUEST_IN, 0xb2, 2, 0, b'')
+
+    # flash over EP2
+    STEP = 0x10
+    print("flash: flashing")
+    for i in range(0, len(code), STEP):
+      handle.bulkWrite(2, code[i:i+STEP])
+
+    # reset
+    print("flash: resetting")
+    try:
+      handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'')
+    except Exception:
+      pass
+
+  def flash(self, fn=None, code=None, reconnect=True):
     if not self.bootstub:
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
@@ -225,28 +257,12 @@ class Panda(object):
     # get version
     print("flash: version is "+self.get_version())
 
-    # confirm flasher is present
-    fr = self._handle.controlRead(Panda.REQUEST_IN, 0xb0, 0, 0, 0xc)
-    assert fr[4:8] == "\xde\xad\xd0\x0d"
+    # do flash
+    Panda.flash_static(self._handle, code)
 
-    # unlock flash
-    print("flash: unlocking")
-    self._handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
-
-    # erase sectors 1 and 2
-    print("flash: erasing")
-    self._handle.controlWrite(Panda.REQUEST_IN, 0xb2, 1, 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_IN, 0xb2, 2, 0, b'')
-
-    # flash over EP2
-    STEP = 0x10
-    print("flash: flashing")
-    for i in range(0, len(code), STEP):
-      self._handle.bulkWrite(2, code[i:i+STEP])
-
-    # reset
-    print("flash: resetting")
-    self.reset()
+    # reconnect
+    if reconnect:
+      self.reconnect()
 
   def recover(self):
     self.reset(enter_bootloader=True)
@@ -424,6 +440,14 @@ class Panda(object):
 
     """
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf1, bus, 0, b'')
+
+  # ******************* isotp *******************
+
+  def isotp_send(self, addr, dat, bus, recvaddr=None, subaddr=None):
+    return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
+
+  def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None):
+    return isotp_recv(self, addr, bus, sendaddr, subaddr)
 
   # ******************* serial *******************
 
