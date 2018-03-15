@@ -26,6 +26,7 @@ interfaces = {
   HONDA.ACURA_RDX: HondaInterface,
   HONDA.ACCORD: HondaInterface,
   HONDA.CIVIC: HondaInterface,
+  HONDA.CIVIC_HATCH: HondaInterface,
   HONDA.CRV_4G: HondaInterface,
   HONDA.CRV_5G: HondaInterface,
   HONDA.ODYSSEY: HondaInterface,

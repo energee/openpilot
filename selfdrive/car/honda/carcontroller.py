@@ -101,7 +101,7 @@ class CarController(object):
       hud_car = 0xc0
 
     # For lateral control-only, send chimes as a beep since we don't send 0x30c
-    if CS.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
+    if CS.CP.carFingerprint in (CAR.CRV_5G, CAR.CIVIC_HATCH, CAR.ACCORD):
       snd_beep = snd_beep if snd_beep is not 0 else snd_chime
 
     #print chime, alert_id, hud_alert
@@ -120,13 +120,13 @@ class CarController(object):
     # *** compute control surfaces ***
     GAS_MAX = 1004
     BRAKE_MAX = 1024/4
-    if CS.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.PILOT, CAR.CRV_5G, CAR.ACCORD):
-      is_fw_modified = os.getenv("DONGLE_ID") in ['99c94dc769b5d96e']
-      STEER_MAX = 0x1FFF if is_fw_modified else 0x1000
+    if CS.CP.carFingerprint in (ACURA_ILX):
+      STEER_MAX = 0xF00
     elif CS.CP.carFingerprint in (CAR.CRV_4G, CAR.ACURA_RDX):
       STEER_MAX = 0x3e8  # CR-V only uses 12-bits and requires a lower value (max value from energee)
     else:
-      STEER_MAX = 0xF00
+      is_fw_modified = os.getenv("DONGLE_ID") in ['99c94dc769b5d96e']
+      STEER_MAX = 0x1FFF if is_fw_modified else 0x1000
     GAS_OFFSET = 328
 
     # steer torque is converted back to CAN reference (positive when steering right)
@@ -151,7 +151,7 @@ class CarController(object):
       can_sends.extend(hondacan.create_ui_commands(pcm_speed, hud, CS.CP.carFingerprint, idx))
 
 	# Only send for cars with longitudinal control.
-    if CS.CP.carFingerprint not in (CAR.CRV_5G, CAR.ACCORD):
+    if CS.CP.carFingerprint not in (CAR.CRV_5G, CAR.CIVIC_HATCH, CAR.ACCORD):
       # Send gas and brake commands.
       if (frame % 2) == 0:
         idx = (frame / 2) % 4
@@ -173,7 +173,7 @@ class CarController(object):
       if (frame % radar_send_step) == 0:
         idx = (frame/radar_send_step) % 4
         can_sends.extend(hondacan.create_radar_commands(CS.v_ego, CS.CP.carFingerprint, idx))
-    
+
     # If using stock ACC, send a cancel command to kill gas when OP disengages
     else:
       if pcm_cancel_cmd:

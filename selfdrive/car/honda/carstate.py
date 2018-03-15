@@ -22,7 +22,7 @@ def parse_gear_shifter(can_gear_shifter, car_fingerprint):
     elif can_gear_shifter == 0xa:
       return "sport"
 
-  elif car_fingerprint in (CAR.CIVIC, CAR.CRV_4G, CAR.ACURA_RDX, CAR.CRV_5G):
+  elif car_fingerprint in (CAR.CIVIC, CAR.CRV_4G, CAR.ACURA_RDX, CAR.CRV_5G, CAR.CIVIC_HATCH, CAR.ACCORD):
     if can_gear_shifter == 0x4:
       return "neutral"
     elif can_gear_shifter == 0x8:
@@ -132,6 +132,12 @@ def get_can_signals(CP):
                 ("EPB_STATE", "EPB_STATUS", 0),
                 ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
                 ("USER_BRAKE", "BRAKE_MODULE", 0)]
+  elif CP.carFingerprint == CAR.CIVIC_HATCH:
+    dbc_f = 'honda_civic_hatchback_ex_2017_can_generated.dbc'
+    signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
+                ("MAIN_ON", "SCM_FEEDBACK", 0),
+                ("EPB_STATE", "EPB_STATUS", 0),
+                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0)]
   elif CP.carFingerprint == CAR.ACURA_RDX:
     dbc_f = 'acura_rdx_2018_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
@@ -282,15 +288,11 @@ class CarState(object):
     # brake switch has shown some single time step noise, so only considered when
     # switch is on for at least 2 consecutive CAN samples
     self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
-    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
-      self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
-      # self.brake_pressed_prev = self.brake_pressed
-    else:
-      self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
-                           (self.brake_switch and self.brake_switch_prev and \
-                           cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
-      self.brake_switch_prev = self.brake_switch
-      self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
+    self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
+                         (self.brake_switch and self.brake_switch_prev and \
+                         cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
+    self.brake_switch_prev = self.brake_switch
+    self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
 
     self.user_brake = cp.vl["VSA_STATUS"]['USER_BRAKE']
     self.standstill = not cp.vl["STANDSTILL"]['WHEELS_MOVING']
