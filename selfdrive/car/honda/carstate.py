@@ -283,7 +283,8 @@ class CarState(object):
     self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
     if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
       self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
-      print("brake_pressed") if self.brake_pressed
+      if self.brake_pressed:
+        print "brake_pressed" 
       # self.brake_pressed_prev = self.brake_pressed
     else:
       self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
