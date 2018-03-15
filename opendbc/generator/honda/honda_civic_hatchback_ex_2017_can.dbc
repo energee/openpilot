@@ -1,0 +1,22 @@
+CM_ "IMPORT _bosch_2018.dbc"
+
+BO_ 892 CRUISE_PARAMS: 8 PCM
+ SG_ CRUISE_SPEED_OFFSET : 31|8@0- (0.1,0) [-128|127] "kph" EON
+ SG_ CHECKSUM : 59|4@0+ (1,0) [0|3] "" EON
+ SG_ COUNTER : 61|2@0+ (1,0) [0|15] "" EON
+
+CM_ SG_ 344 DISTANCE_COUNTER "";
+CM_ SG_ 450 EPB_STATE "3: On, 2: Disengaging, 1: Engaging, 0: Off";
+CM_ SG_ 479 CONTROL_ON "Set to 5 when car is being controlled";
+CM_ SG_ 479 RELATED_TO_GAS "bits 7, 3, and 1 set to 1 when gas not applied";
+CM_ SG_ 479 GAS_BRAKE "Signed value, negative when braking and positive when applying gas";
+CM_ SG_ 806 CMBS_STATES "3: Pressed, 2: On, 0: Off";
+CM_ SG_ 884 WIPER_SWITCH "0 = PARKED, 1 = INTERMITTENT, 2 = LOW, 3 = HIGH/QUICK WIPE";
+CM_ SG_ 891 HIGH_BEAMS "FLASH TO PASS OR FULL ON";
+
+VAL_ 780 CRUISE_SPEED 255 "no_speed" 252 "stopped" ;
+VAL_ 780 HUD_LEAD 3 "acc_off" 2 "solid_car" 1 "dashed_car" 0 "no_car" ;
+VAL_ 806 CMBS_STATES 3 "pressed" 2 "on" 0 "off";
+VAL_ 829 BEEP 3 "single_beep" 2 "triple_beep" 1 "repeated_beep" 0 "no_beep" ;
+
+CM_ "CHFFR_METRIC 330 STEER_ANGLE STEER_ANGLE 0.36 180; CHFFR_METRIC 380 ENGINE_RPM ENGINE_RPM 1 0; CHFFR_METRIC 804 ENGINE_TEMPERATURE ENGINE_TEMPERATURE 1 0";
