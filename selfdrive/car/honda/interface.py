@@ -417,12 +417,12 @@ class CarInterface(object):
     # TODO: I don't like the way capnp does enums
     # These strings aren't checked at compile time
     events = []
-    if not self.CS.can_valid:
-      self.can_invalid_count += 1
-      if self.can_invalid_count >= 5:
-        events.append(create_event('commIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
-    else:
-      self.can_invalid_count = 0
+    # if not self.CS.can_valid:
+    #   self.can_invalid_count += 1
+    #   if self.can_invalid_count >= 5:
+    #     events.append(create_event('commIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
+    # else:
+    self.can_invalid_count = 0
     if self.CS.steer_error:
       events.append(create_event('steerUnavailable', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE, ET.PERMANENT]))
     elif self.CS.steer_not_allowed:
