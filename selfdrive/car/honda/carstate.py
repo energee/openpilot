@@ -22,7 +22,7 @@ def parse_gear_shifter(can_gear_shifter, car_fingerprint):
     elif can_gear_shifter == 0xa:
       return "sport"
 
-  elif car_fingerprint in (CAR.CIVIC, CAR.CRV_4G, CAR.ACURA_RDX, CAR.CRV_5G, CAR.CIVIC_HATCH, CAR.ACCORD):
+  elif car_fingerprint in (CAR.CIVIC, CAR.CRV_4G, CAR.ACURA_RDX, CAR.CRV_5G, CAR.CIVIC_HATCH):
     if can_gear_shifter == 0x4:
       return "neutral"
     elif can_gear_shifter == 0x8:
@@ -32,7 +32,7 @@ def parse_gear_shifter(can_gear_shifter, car_fingerprint):
     elif can_gear_shifter == 0x20:
       return "low"
 
-  elif car_fingerprint in (CAR.PILOT):
+  elif car_fingerprint in (CAR.PILOT, CAR.ACCORD):
      if can_gear_shifter == 0x8:
        return "reverse"
      elif can_gear_shifter == 0x4:
@@ -124,14 +124,13 @@ def get_can_signals(CP):
   elif CP.carFingerprint == CAR.CRV_4G:
     dbc_f = 'honda_crv_touring_2016_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
-  elif CP.carFingerprint in (CAR.ACCORD, CAR.CRV_5G):
+  elif CP.carFingerprint == CAR.CRV_5G:
     dbc_f = 'honda_crv_ex_2017_can_generated.dbc'
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
                 ("BRAKE_PRESSED", "BRAKE_MODULE", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
-                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
-                ("USER_BRAKE", "BRAKE_MODULE", 0)]
+                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0)]
   elif CP.carFingerprint == CAR.CIVIC_HATCH:
     dbc_f = 'honda_civic_hatchback_ex_2017_can_generated.dbc'
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
@@ -151,6 +150,13 @@ def get_can_signals(CP):
     dbc_f = 'honda_pilot_touring_2017_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0),
                 ("CAR_GAS", "GAS_PEDAL_2", 0)]
+  elif CP.carFingerprint == CAR.ACCORD:
+    dbc_f = 'honda_accord_s2t_2018_can_generated.dbc'
+    signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
+                ("BRAKE_PRESSED", "BRAKE_MODULE", 0),
+                ("MAIN_ON", "SCM_FEEDBACK", 0),
+                ("EPB_STATE", "EPB_STATUS", 0),
+                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0)]
 
   # add gas interceptor reading if we are using it
   if CP.enableGas:
