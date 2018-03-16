@@ -71,8 +71,8 @@ class RadarInterface(object):
 
     ret = car.RadarState.new_message()
     errors = []
-    if not self.rcp.can_valid:
-      errors.append("commIssue")
+    # if not self.rcp.can_valid:
+    #   errors.append("commIssue")
     if self.radar_fault:
       errors.append("fault")
     ret.errors = errors
