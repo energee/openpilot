@@ -6,12 +6,14 @@ typedef void (*safety_hook_init)(int16_t param);
 typedef void (*rx_hook)(CAN_FIFOMailBox_TypeDef *to_push);
 typedef int (*tx_hook)(CAN_FIFOMailBox_TypeDef *to_send);
 typedef int (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
+typedef int (*fwd_hook)(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd);
 
 typedef struct {
   safety_hook_init init;
   rx_hook rx;
   tx_hook tx;
   tx_lin_hook tx_lin;
+  fwd_hook fwd;
 } safety_hooks;
 
 // This can be set by the safety hooks.
@@ -22,7 +24,10 @@ int controls_allowed = 0;
 #include "safety/safety_honda_nidec.h"
 #include "safety/safety_toyota.h"
 #include "safety/safety_gm.h"
+<<<<<<< HEAD
 #include "safety/safety_honda_bosch.h"
+=======
+>>>>>>> energee/crv-042
 #include "safety/safety_elm327.h"
 
 const safety_hooks *current_hooks = &nooutput_hooks;
@@ -37,6 +42,10 @@ int safety_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
 int safety_tx_lin_hook(int lin_num, uint8_t *data, int len){
   return current_hooks->tx_lin(lin_num, data, len);
+}
+
+int safety_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  return current_hooks->fwd(bus_num, to_fwd);
 }
 
 typedef struct {
@@ -55,7 +64,12 @@ typedef struct {
 
 const safety_hook_config safety_hook_registry[] = {
   {SAFETY_NOOUTPUT, &nooutput_hooks},
+<<<<<<< HEAD
   {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
+=======
+  {SAFETY_HONDA, &honda_hooks},
+  {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
+>>>>>>> energee/crv-042
   {SAFETY_TOYOTA, &toyota_hooks},
   {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
   {SAFETY_TOYOTA_NOLIMITS, &toyota_nolimits_hooks},

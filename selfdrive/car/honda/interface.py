@@ -132,7 +132,7 @@ class CarInterface(object):
     if 0x1ef in fingerprint:
       ret.safetyModel = car.CarParams.SafetyModels.hondaBosch
     else:
-      ret.safetyModel = car.CarParams.SafetyModels.hondaNidec
+      ret.safetyModel = car.CarParams.SafetyModels.honda
 
     ret.enableSteer = True
     ret.enableBrake = True
@@ -195,12 +195,25 @@ class CarInterface(object):
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.18, 0.12]
-    elif candidate == CAR.CRV:
+    elif candidate == CAR.CRV_4G:
       stop_and_go = False
       ret.mass = 3572./2.205 + std_cargo
       ret.wheelbase = 2.62
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 15.3
+      ret.steerKp, ret.steerKi = 0.8, 0.24
+
+      ret.longitudinalKpBP = [0., 5., 35.]
+      ret.longitudinalKpV = [1.2, 0.8, 0.5]
+      ret.longitudinalKiBP = [0., 35.]
+      ret.longitudinalKiV = [0.18, 0.12]
+    elif candidate == CAR.CRV_5G:
+      stop_and_go = True
+      ret.enableCamera = True
+      ret.mass = 3473./2.205 + std_cargo
+      ret.wheelbase = 2.67
+      ret.centerToFront = ret.wheelbase * 0.37
+      ret.steerRatio = 13.0
       ret.steerKp, ret.steerKi = 0.8, 0.24
 
       ret.longitudinalKpBP = [0., 5., 35.]

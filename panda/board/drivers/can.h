@@ -349,8 +349,10 @@ void can_rx(uint8_t can_number) {
 
     // forwarding (panda only)
     #ifdef PANDA
-      if (can_forwarding[bus_number] != -1) {
+      int bus_fwd_num = can_forwarding[bus_number] != -1 ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
+      if (bus_fwd_num != -1) {
         CAN_FIFOMailBox_TypeDef to_send;
+<<<<<<< HEAD
         int can_id = (to_push.RIR>>21) & 0x7FF;
         // Bosch, remove 0x33D and 0xE4 (Move into its own file)
         if (can_id != 0xE4 && can_id != 0x33D && can_id <= 0x750) {
@@ -361,6 +363,13 @@ void can_rx(uint8_t can_number) {
         }
         can_send(&to_send, can_forwarding[bus_number]);
 
+=======
+        to_send.RIR = to_push.RIR | 1; // TXRQ
+        to_send.RDTR = to_push.RDTR;
+        to_send.RDLR = to_push.RDLR;
+        to_send.RDHR = to_push.RDHR;
+        can_send(&to_send, bus_fwd_num);
+>>>>>>> energee/crv-042
       }
     #endif
 

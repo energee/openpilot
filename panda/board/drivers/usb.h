@@ -287,6 +287,26 @@ void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
   }
 }
 
+// IN EP 0 TX FIFO has a max size of 127 bytes (much smaller than the rest)
+// so use TX FIFO empty interrupt to send larger amounts of data
+void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
+  #ifdef DEBUG_USB
+  puts("writing ");
+  hexdump(src, len);
+  #endif
+
+  uint16_t wplen = min(len, 0x40);
+  USB_WritePacket(src, wplen, 0);
+
+  if (wplen < len) {
+    ep0_txdata = src + wplen;
+    ep0_txlen = len - wplen;
+    USBx_DEVICE->DIEPEMPMSK |= 1;
+  } else {
+    USBx_OUTEP(0)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+  }
+}
+
 void usb_reset() {
   // unmask endpoint interrupts, so many sets
   USBx_DEVICE->DAINT = 0xFFFFFFFF;

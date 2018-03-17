@@ -104,7 +104,10 @@ class Panda(object):
   SAFETY_NOOUTPUT = 0
   SAFETY_HONDA_NIDEC = 1
   SAFETY_TOYOTA = 2
+<<<<<<< HEAD
   SAFETY_GM = 3
+=======
+>>>>>>> energee/crv-042
   SAFETY_HONDA_BOSCH = 4
   SAFETY_TOYOTA_NOLIMITS = 0x1336
   SAFETY_ALLOUTPUT = 0x1337

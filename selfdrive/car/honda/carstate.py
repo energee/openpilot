@@ -22,7 +22,7 @@ def parse_gear_shifter(can_gear_shifter, car_fingerprint):
     elif can_gear_shifter == 0xa:
       return "sport"
 
-  elif car_fingerprint in (CAR.CIVIC, CAR.CIVIC_HATCH, CAR.CRV, CAR.ACURA_RDX):
+elif car_fingerprint in (CAR.CIVIC, CAR.CIVIC_HATCH, CAR.CRV_4G, CAR.ACURA_RDX, CAR.CRV_5G):
     if can_gear_shifter == 0x4:
       return "neutral"
     elif can_gear_shifter == 0x8:
@@ -74,7 +74,7 @@ def get_can_signals(CP):
       ("DOOR_OPEN_RR", "DOORS_STATUS", 1),
       ("LEFT_BLINKER", "SCM_FEEDBACK", 0),
       ("RIGHT_BLINKER", "SCM_FEEDBACK", 0),
-      ("CRUISE_SPEED_OFFSET", "CRUISE_PARAMS", 0),
+#       ("CRUISE_SPEED_OFFSET", "CRUISE_PARAMS", 0),
       ("GEAR", "GEARBOX", 0),
       ("WHEELS_MOVING", "STANDSTILL", 1),
       ("BRAKE_ERROR_1", "STANDSTILL", 1),
@@ -101,7 +101,7 @@ def get_can_signals(CP):
       ("STEERING_SENSORS", 100),
       ("DOORS_STATUS", 3),
       ("SCM_FEEDBACK", 10),
-      ("CRUISE_PARAMS", 10),
+#       ("CRUISE_PARAMS", 10),
       ("GEARBOX", 100),
       ("STANDSTILL", 50),
       ("SEATBELT_STATUS", 10),
@@ -127,9 +127,16 @@ def get_can_signals(CP):
     dbc_f = 'acura_ilx_2016_can_generated.dbc'
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
                 ("MAIN_ON", "SCM_BUTTONS", 0)]
-  elif CP.carFingerprint == CAR.CRV:
+  elif CP.carFingerprint == CAR.CRV_4G:
     dbc_f = 'honda_crv_touring_2016_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
+  elif CP.carFingerprint == CAR.CRV_5G:
+    dbc_f = 'honda_crv_ex_2017_can_generated.dbc'
+    signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
+                ("MAIN_ON", "SCM_FEEDBACK", 0),
+                ("EPB_STATE", "EPB_STATUS", 0),
+                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
+                ("USER_BRAKE", "BRAKE_MODULE", 0)]
   elif CP.carFingerprint == CAR.ACURA_RDX:
     dbc_f = 'acura_rdx_2018_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
@@ -165,6 +172,7 @@ class CarState(object):
     self.user_gas, self.user_gas_pressed = 0., 0
     self.brake_switch_prev = 0
     self.brake_switch_ts = 0
+    self.brake_pressed_prev = 0
 
     self.cruise_buttons = 0
     self.cruise_setting = 0
@@ -224,6 +232,7 @@ class CarState(object):
     # blend in transmission speed at low speed, since it has more low speed accuracy
     self.v_weight = interp(self.v_wheel, v_weight_bp, v_weight_v)
     speed = (1. - self.v_weight) * cp.vl["ENGINE_DATA"]['XMISSION_SPEED'] * CV.KPH_TO_MS + self.v_weight * self.v_wheel
+
     if abs(speed - self.v_ego) > 2.0:  # Prevent large accelerations when car starts at non zero speed
       self.v_ego_x = np.matrix([[speed], [0.0]])
 
@@ -239,7 +248,7 @@ class CarState(object):
       self.user_gas_pressed = self.user_gas > 0 # this works because interceptor read < 0 when pedal position is 0. Once calibrated, this will change
 
     can_gear_shifter = cp.vl["GEARBOX"]['GEAR_SHIFTER']
-    self.gear = 0 if self.CP.carFingerprint == CAR.CIVIC or CAR.CIVIC_HATCH else cp.vl["GEARBOX"]['GEAR']
+    self.gear = 0 if self.CP.carFingerprint == CAR.CIVIC else cp.vl["GEARBOX"]['GEAR']
     self.angle_steers = cp.vl["STEERING_SENSORS"]['STEER_ANGLE']
     self.angle_steers_rate = cp.vl["STEERING_SENSORS"]['STEER_ANGLE_RATE']
 
@@ -250,7 +259,7 @@ class CarState(object):
     self.left_blinker_on = cp.vl["SCM_FEEDBACK"]['LEFT_BLINKER']
     self.right_blinker_on = cp.vl["SCM_FEEDBACK"]['RIGHT_BLINKER']
 
-    if self.CP.carFingerprint in (CAR.CIVIC, CAR.CIVIC_HATCH, CAR.ODYSSEY):
+    if self.CP.carFingerprint in (CAR.CIVIC, CAR.CIVIC_HATCH, CAR.ODYSSEY, CAR.CRV_5G):
       self.park_brake = cp.vl["EPB_STATUS"]['EPB_STATE'] != 0
       self.brake_hold = cp.vl["VSA_STATUS"]['BRAKE_HOLD_ACTIVE']
       self.main_on = cp.vl["SCM_FEEDBACK"]['MAIN_ON']
@@ -260,12 +269,12 @@ class CarState(object):
 
       self.main_on = cp.vl["SCM_BUTTONS"]['MAIN_ON']
 
-    self.cruise_speed_offset = calc_cruise_offset(cp.vl["CRUISE_PARAMS"]['CRUISE_SPEED_OFFSET'], self.v_ego)
+    self.cruise_speed_offset = calc_cruise_offset(0, self.v_ego)
     self.gear_shifter = parse_gear_shifter(can_gear_shifter, self.CP.carFingerprint)
 
     self.pedal_gas = cp.vl["POWERTRAIN_DATA"]['PEDAL_GAS']
     # crv doesn't include cruise control
-    if self.CP.carFingerprint in (CAR.CRV, CAR.ODYSSEY, CAR.ACURA_RDX):
+    if self.CP.carFingerprint in (CAR.CRV_4G, CAR.ODYSSEY, CAR.ACURA_RDX):
       self.car_gas = self.pedal_gas
     else:
       self.car_gas = cp.vl["GAS_PEDAL_2"]['CAR_GAS']
@@ -280,23 +289,22 @@ class CarState(object):
     # brake switch has shown some single time step noise, so only considered when
     # switch is on for at least 2 consecutive CAN samples
     self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
-    self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
-                         (self.brake_switch and self.brake_switch_prev and \
-                         cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
-    self.brake_switch_prev = self.brake_switch
-    self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
+    if self.CP.carFingerprint in (CAR.CRV_5G):
+      self.brake_pressed = cp.vl["BRAKE_MODULE"]['USER_BRAKE']
+      #                      or (self.brake_pressed and self.brake_pressed_prev)
+      # self.brake_pressed_prev = self.brake_pressed
+    else:
+      self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
+                           (self.brake_switch and self.brake_switch_prev and \
+                           cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
+      self.brake_switch_prev = self.brake_switch
+      self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
 
     self.user_brake = cp.vl["VSA_STATUS"]['USER_BRAKE']
     self.standstill = not cp.vl["STANDSTILL"]['WHEELS_MOVING']
-    if CAR.CIVIC_HATCH:
-      self.steer_only = True
-      self.v_cruise_pcm = 0
-      self.hud_lead = 0
-      self.pcm_acc_status = cp.vl['CONTROL_ON']
-    else:
-      self.v_cruise_pcm = cp.vl["CRUISE"]['CRUISE_SPEED_PCM']
-      self.pcm_acc_status = cp.vl["POWERTRAIN_DATA"]['ACC_STATUS']
-      self.hud_lead = cp.vl["ACC_HUD"]['HUD_LEAD']
+    self.v_cruise_pcm = cp.vl["CRUISE"]['CRUISE_SPEED_PCM']
+    self.pcm_acc_status = cp.vl["POWERTRAIN_DATA"]['ACC_STATUS']
+    self.hud_lead = cp.vl["ACC_HUD"]['HUD_LEAD']
 
 
 # carstate standalone tester

@@ -453,10 +453,10 @@ class Planner(object):
     events = []
     if self.model_dead:
       events.append(create_event('modelCommIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
-    #if self.radar_dead or 'commIssue' in self.radar_errors:
-    #  events.append(create_event('radarCommIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
-    #if 'fault' in self.radar_errors:
-    #  events.append(create_event('radarFault', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
+    # if self.radar_dead or 'commIssue' in self.radar_errors:
+    #   events.append(create_event('radarCommIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
+    if 'fault' in self.radar_errors:
+      events.append(create_event('radarFault', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
 
     # Interpolation of trajectory
     dt = min(cur_time - self.acc_start_time, _DT_MPC + _DT) + _DT  # no greater than dt mpc + dt, to prevent too high extraps

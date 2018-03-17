@@ -159,6 +159,13 @@ static void toyota_init(int16_t param) {
   controls_allowed = 0;
   actuation_limits = 1;
   dbc_eps_torque_factor = param;
+<<<<<<< HEAD
+=======
+}
+
+static int toyota_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  return -1;
+>>>>>>> energee/crv-042
 }
 
 const safety_hooks toyota_hooks = {
@@ -166,6 +173,7 @@ const safety_hooks toyota_hooks = {
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
+  .fwd = toyota_fwd_hook,
 };
 
 static void toyota_nolimits_init(int16_t param) {
@@ -179,4 +187,5 @@ const safety_hooks toyota_nolimits_hooks = {
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
   .tx_lin = toyota_tx_lin_hook,
+  .fwd = toyota_fwd_hook,
 };
