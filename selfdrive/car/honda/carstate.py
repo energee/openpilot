@@ -99,7 +99,7 @@ def get_can_signals(CP):
       ("ENGINE_DATA", 100),
       ("WHEEL_SPEEDS", 50),
       ("STEERING_SENSORS", 100),
-      ("DOORS_STATUS", 3),
+#       ("DOORS_STATUS", 3),
       ("SCM_FEEDBACK", 10),
 #       ("CRUISE_PARAMS", 10),
       ("GEARBOX", 100),
