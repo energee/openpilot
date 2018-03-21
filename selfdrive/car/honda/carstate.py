@@ -68,10 +68,10 @@ def get_can_signals(CP):
       ("STEER_ANGLE", "STEERING_SENSORS", 0),
       ("STEER_ANGLE_RATE", "STEERING_SENSORS", 0),
       ("STEER_TORQUE_SENSOR", "STEER_STATUS", 0),
-      ("DOOR_OPEN_FL", "DOORS_STATUS", 0),
-      ("DOOR_OPEN_FR", "DOORS_STATUS", 0),
-      ("DOOR_OPEN_RL", "DOORS_STATUS", 0),
-      ("DOOR_OPEN_RR", "DOORS_STATUS", 0),
+#       ("DOOR_OPEN_FL", "DOORS_STATUS", 0),
+#       ("DOOR_OPEN_FR", "DOORS_STATUS", 0),
+#       ("DOOR_OPEN_RL", "DOORS_STATUS", 0),
+#       ("DOOR_OPEN_RR", "DOORS_STATUS", 0),
       ("LEFT_BLINKER", "SCM_FEEDBACK", 0),
       ("RIGHT_BLINKER", "SCM_FEEDBACK", 0),
 #       ("CRUISE_SPEED_OFFSET", "CRUISE_PARAMS", 0),
@@ -216,8 +216,7 @@ class CarState(object):
     self.prev_right_blinker_on = self.right_blinker_on
 
     # ******************* parse out can *******************
-    self.door_all_closed = not any([cp.vl["DOORS_STATUS"]['DOOR_OPEN_FL'], cp.vl["DOORS_STATUS"]['DOOR_OPEN_FR'],
-                                    cp.vl["DOORS_STATUS"]['DOOR_OPEN_RL'], cp.vl["DOORS_STATUS"]['DOOR_OPEN_RR']])
+    self.door_all_closed = 1
     self.seatbelt = not cp.vl["SEATBELT_STATUS"]['SEATBELT_DRIVER_LAMP'] and cp.vl["SEATBELT_STATUS"]['SEATBELT_DRIVER_LATCHED']
 
     # 2 = temporary 3= TBD 4 = temporary, hit a bump 5 (permanent) 6 = temporary 7 (permanent)
