@@ -286,7 +286,7 @@ class CarState(object):
       self.steer_override = abs(cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']) > 1200
     self.steer_torque_driver = cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']
 
-    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.CIVIC_HATCH):
+    if self.CP.carFingerprint in (CAR.CRV_5G):
       self.cruise_speed_offset = calc_cruise_offset(0, self.v_ego)
       self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
       # On set, cruise set speed pulses between 255 and the set speed prev is set to avoid this.
