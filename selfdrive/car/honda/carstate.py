@@ -261,7 +261,7 @@ class CarState(object):
     self.left_blinker_on = cp.vl["SCM_FEEDBACK"]['LEFT_BLINKER']
     self.right_blinker_on = cp.vl["SCM_FEEDBACK"]['RIGHT_BLINKER']
 
-    if self.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.CRV_5G):
+    if self.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.CIVIC_HATCH, CAR.CRV_5G):
       self.park_brake = cp.vl["EPB_STATUS"]['EPB_STATE'] != 0
       self.brake_hold = cp.vl["VSA_STATUS"]['BRAKE_HOLD_ACTIVE']
       self.main_on = cp.vl["SCM_FEEDBACK"]['MAIN_ON']
@@ -286,7 +286,7 @@ class CarState(object):
       self.steer_override = abs(cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']) > 1200
     self.steer_torque_driver = cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']
 
-    if self.CP.carFingerprint in (CAR.CRV_5G):
+    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.CIVIC_HATCH):
       self.cruise_speed_offset = calc_cruise_offset(0, self.v_ego)
       self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
       # On set, cruise set speed pulses between 255 and the set speed prev is set to avoid this.
