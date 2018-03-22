@@ -69,13 +69,17 @@ def create_steering_control(packer, apply_steer, car_fingerprint, idx):
     "STEER_TORQUE": apply_steer,
     "STEER_TORQUE_REQUEST": apply_steer != 0,
   }
-  return packer.make_can_msg("STEERING_CONTROL", 0, values, idx)
+  if car_fingerprint in (CAR.CRV_5G, CAR.ACCORD, CAR.CIVIC_HATCH):
+    return packer.make_can_msg("STEERING_CONTROL", 2, values, idx)
+  else:
+    return packer.make_can_msg("STEERING_CONTROL", 0, values, idx)
 
 
 def create_ui_commands(packer, pcm_speed, hud, car_fingerprint, idx):
   """Creates an iterable of CAN messages for the UIs."""
   commands = []
 
+  # TODO: Why is X4 always 0xc1? Not implemented yet in canpacker
   acc_hud_values = {
     'PCM_SPEED': pcm_speed * CV.MS_TO_KPH,
     'PCM_GAS': hud.pcm_accel,
@@ -86,7 +90,8 @@ def create_ui_commands(packer, pcm_speed, hud, car_fingerprint, idx):
     'SET_ME_X03_2': 0x03,
     'SET_ME_X01': 0x01,
   }
-  commands.append(packer.make_can_msg("ACC_HUD", 0, acc_hud_values, idx))
+  if car_fingerprint not in (CAR.CRV_5G, CAR.ACCORD,CAR.CIVIC_HATCH):
+    commands.append(packer.make_can_msg("ACC_HUD", 0, acc_hud_values, idx))
 
   lkas_hud_values = {
     'SET_ME_X41': 0x41,
@@ -95,7 +100,10 @@ def create_ui_commands(packer, pcm_speed, hud, car_fingerprint, idx):
     'SOLID_LANES': hud.lanes,
     'BEEP': hud.beep,
   }
-  commands.append(packer.make_can_msg('LKAS_HUD', 0, lkas_hud_values, idx))
+  if car_fingerprint in (CAR.CRV_5G, CAR.ACCORD,CAR.CIVIC_HATCH):
+    commands.append(packer.make_can_msg('LKAS_HUD', 2, lkas_hud_values, idx))
+  else:
+    commands.append(packer.make_can_msg('LKAS_HUD', 0, lkas_hud_values, idx))
 
   if car_fingerprint in (CAR.CIVIC, CAR.ODYSSEY):
     commands.append(packer.make_can_msg('HIGHBEAM_CONTROL', 0, {'HIGHBEAMS_ON': False}, idx))
@@ -123,7 +131,7 @@ def create_radar_commands(v_ego, car_fingerprint, idx):
   if car_fingerprint == CAR.CIVIC:
     msg_0x301 = "\x02\x38\x44\x32\x4f\x00\x00"
     commands.append(make_can_msg(0x300, msg_0x300, idx + 8, 1))  # add 8 on idx.
-  elif car_fingerprint == CAR.CRV:
+  elif car_fingerprint == CAR.CRV_4G:
     msg_0x301 = "\x00\x00\x50\x02\x51\x00\x00"
     commands.append(make_can_msg(0x300, msg_0x300, idx, 1))
   elif car_fingerprint == CAR.ACURA_RDX:
@@ -141,3 +149,6 @@ def create_radar_commands(v_ego, car_fingerprint, idx):
 
   commands.append(make_can_msg(0x301, msg_0x301, idx, 1))
   return commands
+
+def create_cancel_command(idx):
+  return make_can_msg(0x296, "\x40\x00\x00", idx, 0)

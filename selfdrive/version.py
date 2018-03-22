@@ -4,11 +4,10 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "common", "ve
   version = _versionf.read().split('"')[1]
 
 try:
-  origin = subprocess.check_output(["git", "config", "--get", "remote.origin.url"])
-  if "-private" in origin:
+  if "-private" in subprocess.check_output(["git", "config", "--get", "remote.origin.url"]):
     upstream = "origin/master"
   else:
-    if 'chffrplus' in origin:
+    if 'chffrplus' in version:
       upstream = "origin/release"
     else:
       upstream = "origin/release2"

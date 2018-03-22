@@ -14,11 +14,10 @@ typedef struct {
 } state_t;
 
 typedef struct {
-    double x[21];
-    double y[21];
-    double psi[21];
-    double delta[21];
-    double cost;
+    double x[20];
+    double y[20];
+    double psi[20];
+    double delta[20];
 } log_t;
 
 void init(double pathCost, double laneCost, double headingCost, double steerRateCost);

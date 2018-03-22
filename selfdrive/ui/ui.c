@@ -921,7 +921,7 @@ static void ui_draw_vision_lanes(UIState *s) {
 
     // draw MPC only if engaged
     if (scene->engaged) {
-      draw_x_y(s, &scene->mpc_x[0], &scene->mpc_y[0], 20, nvgRGBA(255, 0, 0, 255));
+      draw_x_y(s, &scene->mpc_x[1], &scene->mpc_y[1], 19, nvgRGBA(255, 0, 0, 255));
     }
   }
 }
@@ -1190,12 +1190,7 @@ static void ui_draw_vision_speed(UIState *s) {
   nvgFontFace(s->vg, "sans-regular");
   nvgFontSize(s->vg, 36*2.5);
   nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 200));
-
-  if (s->is_metric) {
-    nvgText(s->vg, viz_speed_x+viz_speed_w/2, 320, "kph", NULL);
-  } else {
-    nvgText(s->vg, viz_speed_x+viz_speed_w/2, 320, "mph", NULL);
-  }
+  nvgText(s->vg, viz_speed_x+viz_speed_w/2, 320, "mph", NULL);
 }
 
 static void ui_draw_vision_wheel(UIState *s) {
