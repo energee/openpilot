@@ -134,13 +134,14 @@ def get_can_signals(CP):
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
                 ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
-               ("USER_BRAKE", "BRAKE_MODULE", 0)]
+                ("USER_BRAKE", "BRAKE_MODULE", 0)]
   elif CP.carFingerprint == CAR.CIVIC_HATCH:
     dbc_f = 'honda_civic_hatchback_ex_2017_can_generated.dbc'
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
-                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0)]
+                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
+                ("CRUISE_SPEED", "ACC_HUD", 0)]
   elif CP.carFingerprint == CAR.ACURA_RDX:
     dbc_f = 'acura_rdx_2018_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
