@@ -292,6 +292,16 @@ class CarState(object):
       # On set, cruise set speed pulses between 255 and the set speed prev is set to avoid this.
       self.v_cruise_pcm = self.v_cruise_pcm_prev if cp.vl["ACC_HUD"]['CRUISE_SPEED'] == 255.0 else cp.vl["ACC_HUD"]['CRUISE_SPEED']
       self.v_cruise_pcm_prev = self.v_cruise_pcm
+    elif self.CP.carFingerprint in (CAR.CIVIC_HATCH):
+      self.cruise_speed_offset = calc_cruise_offset(0, self.v_ego)
+      self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
+                         (self.brake_switch and self.brake_switch_prev and \
+                         cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
+      self.brake_switch_prev = self.brake_switch
+      self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
+      # On set, cruise set speed pulses between 255 and the set speed prev is set to avoid this.
+      self.v_cruise_pcm = self.v_cruise_pcm_prev if cp.vl["ACC_HUD"]['CRUISE_SPEED'] == 255.0 else cp.vl["ACC_HUD"]['CRUISE_SPEED']
+      self.v_cruise_pcm_prev = self.v_cruise_pcm
     else:
       self.cruise_speed_offset = calc_cruise_offset(cp.vl["CRUISE_PARAMS"]['CRUISE_SPEED_OFFSET'], self.v_ego)
       self.v_cruise_pcm = cp.vl["CRUISE"]['CRUISE_SPEED_PCM']
