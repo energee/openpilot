@@ -304,7 +304,7 @@ class CarState(object):
 
     self.user_brake = cp.vl["VSA_STATUS"]['USER_BRAKE']
     self.standstill = not cp.vl["STANDSTILL"]['WHEELS_MOVING']
-    self.v_cruise_pcm = cp.vl["CRUISE"]['CRUISE_SPEED_PCM']
+#    self.v_cruise_pcm = cp.vl["CRUISE"]['CRUISE_SPEED_PCM']
     self.pcm_acc_status = cp.vl["POWERTRAIN_DATA"]['ACC_STATUS']
     self.hud_lead = cp.vl["ACC_HUD"]['HUD_LEAD']
 
