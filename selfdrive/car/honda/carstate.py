@@ -106,7 +106,7 @@ def get_can_signals(CP):
       ("SCM_BUTTONS", 25),
   ]
 
-  if CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
+  if CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD, CAR.CIVIC_HATCH):
     # Civic is only bosch to use the same brake message as other hondas.
     if CP.carFingerprint != CAR.CIVIC_HATCH:
       signals += [("BRAKE_PRESSED", "BRAKE_MODULE", 0)]
