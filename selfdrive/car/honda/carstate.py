@@ -21,7 +21,7 @@ def parse_gear_shifter(can_gear_shifter, car_fingerprint):
       return "drive"
     elif can_gear_shifter == 0xa:
       return "sport"
-  elif car_fingerprint in (CAR.CIVIC, CAR.CRV, CAR.ACURA_RDX, CAR.CRV_5G):
+  elif car_fingerprint in (CAR.CIVIC, CAR.CRV, CAR.ACURA_RDX, CAR.CRV_5G, CAR.CIVIC_HATCH):
     if can_gear_shifter == 0x1:
       return "park"
     elif can_gear_shifter == 0x2:
@@ -106,21 +106,20 @@ def get_can_signals(CP):
       ("SCM_BUTTONS", 25),
   ]
 
-<<<<<<< HEAD
-  if CP.carFingerprint not in (CAR.CRV_5G):
-=======
   if CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
+    # Civic is only bosch to use the same brake message as other hondas.
+    if CP.carFingerprint not CAR.CIVIC_HATCH:
+      signals += [("BRAKE_PRESSED", "BRAKE_MODULE", 0)]
+      checks += [("BRAKE_MODULE", 50)]
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
                 ("BRAKE_PRESSED", "BRAKE_MODULE", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
-                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
                 ("CRUISE_SPEED", "ACC_HUD", 0)]
-    checks += [("BRAKE_MODULE", 50),
+    checks += [
                ("GAS_PEDAL_2", 100)]
   else:
-    # Bosch cars don't use these signals.
->>>>>>> Adds accord to bosch port
+    # Nidec signals.
     signals += [("CRUISE_SPEED_PCM", "CRUISE", 0),
                 ("CRUISE_SPEED_OFFSET", "CRUISE_PARAMS", 0)]
     checks += [("CRUISE_PARAMS", 50)]
@@ -151,6 +150,8 @@ def get_can_signals(CP):
   elif CP.carFingerprint == CAR.ACURA_RDX:
     dbc_f = 'acura_rdx_2018_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0)]
+  elif CP.carFingerprint == CAR.CIVIC_HATCH:
+    dbc_f = 'honda_civic_hatchback_ex_2017_can_generated.dbc'
   elif CP.carFingerprint == CAR.ODYSSEY:
     dbc_f = 'honda_odyssey_exl_2018_generated.dbc'
     signals += [("MAIN_ON", "SCM_FEEDBACK", 0),
@@ -271,7 +272,7 @@ class CarState(object):
     self.left_blinker_on = cp.vl["SCM_FEEDBACK"]['LEFT_BLINKER']
     self.right_blinker_on = cp.vl["SCM_FEEDBACK"]['RIGHT_BLINKER']
 
-    if self.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.CRV_5G, CAR.ACCORD):
+    if self.CP.carFingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.CRV_5G, CAR.ACCORD, CAR.CIVIC_HATCH):
       self.park_brake = cp.vl["EPB_STATUS"]['EPB_STATE'] != 0
       self.brake_hold = cp.vl["VSA_STATUS"]['BRAKE_HOLD_ACTIVE']
       self.main_on = cp.vl["SCM_FEEDBACK"]['MAIN_ON']
@@ -296,14 +297,17 @@ class CarState(object):
       self.steer_override = abs(cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']) > 1200
     self.steer_torque_driver = cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']
 
-<<<<<<< HEAD
-    if self.CP.carFingerprint in (CAR.CRV_5G):
-=======
-    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD):
->>>>>>> Adds accord to bosch port
+    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD, CAR.HATCH):
       self.cruise_speed_offset = calc_cruise_offset(0, self.v_ego)
-      self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
-      # On set, cruise set speed pulses between 255 and the set speed prev is set to avoid this.
+      if self.CP.carFingerprint == CAR.HATCH:
+        self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
+                          (self.brake_switch and self.brake_switch_prev and \
+                          cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
+        self.brake_switch_prev = self.brake_switch
+        self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
+      else:
+        self.brake_pressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED']
+      # On set, cruise set speed pulses between 254~255 and the set speed prev is set to avoid this.
       self.v_cruise_pcm = self.v_cruise_pcm_prev if cp.vl["ACC_HUD"]['CRUISE_SPEED'] > 160.0 else cp.vl["ACC_HUD"]['CRUISE_SPEED']
       self.v_cruise_pcm_prev = self.v_cruise_pcm
     else:

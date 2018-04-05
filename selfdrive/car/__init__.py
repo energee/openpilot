@@ -24,6 +24,7 @@ except ImportError:
 interfaces = {
   HONDA.ACCORD: HondaInterface,
   HONDA.CIVIC: HondaInterface,
+  HONDA.CIVIC_HATCH: HondaInterface,
   HONDA.ACURA_ILX: HondaInterface,
   HONDA.CRV: HondaInterface,
   HONDA.CRV_5G: HondaInterface,
