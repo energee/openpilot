@@ -296,9 +296,10 @@ class CarState(object):
       self.steer_override = abs(cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']) > 1200
     self.steer_torque_driver = cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']
 
-    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD, CAR.HATCH):
+    if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD, CAR.CIVIC_HATCH):
       self.cruise_speed_offset = calc_cruise_offset(0, self.v_ego)
-      if self.CP.carFingerprint == CAR.HATCH:
+      if self.CP.carFingerprint == CAR.CIVIC_HATCH:
+        self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
         self.brake_pressed = cp.vl["POWERTRAIN_DATA"]['BRAKE_PRESSED'] or \
                           (self.brake_switch and self.brake_switch_prev and \
                           cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
@@ -310,6 +311,7 @@ class CarState(object):
       self.v_cruise_pcm = self.v_cruise_pcm_prev if cp.vl["ACC_HUD"]['CRUISE_SPEED'] > 160.0 else cp.vl["ACC_HUD"]['CRUISE_SPEED']
       self.v_cruise_pcm_prev = self.v_cruise_pcm
     else:
+      self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
       self.cruise_speed_offset = calc_cruise_offset(cp.vl["CRUISE_PARAMS"]['CRUISE_SPEED_OFFSET'], self.v_ego)
       self.v_cruise_pcm = cp.vl["CRUISE"]['CRUISE_SPEED_PCM']
       # brake switch has shown some single time step noise, so only considered when
@@ -320,7 +322,7 @@ class CarState(object):
       self.brake_switch_prev = self.brake_switch
       self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
 
-    self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
+
     self.user_brake = cp.vl["VSA_STATUS"]['USER_BRAKE']
     self.standstill = not cp.vl["STANDSTILL"]['WHEELS_MOVING']
     self.pcm_acc_status = cp.vl["POWERTRAIN_DATA"]['ACC_STATUS']
