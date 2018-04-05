@@ -112,9 +112,9 @@ def get_can_signals(CP):
       signals += [("BRAKE_PRESSED", "BRAKE_MODULE", 0)]
       checks += [("BRAKE_MODULE", 50)]
     signals += [("CAR_GAS", "GAS_PEDAL_2", 0),
-                ("BRAKE_PRESSED", "BRAKE_MODULE", 0),
                 ("MAIN_ON", "SCM_FEEDBACK", 0),
                 ("EPB_STATE", "EPB_STATUS", 0),
+                ("BRAKE_HOLD_ACTIVE", "VSA_STATUS", 0),
                 ("CRUISE_SPEED", "ACC_HUD", 0)]
     checks += [
                ("GAS_PEDAL_2", 100)]
