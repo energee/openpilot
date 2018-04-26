@@ -125,6 +125,7 @@ def get_can_signals(CP):
 
   if CP.carFingerprint == CAR.ACCORD:
     dbc_f = 'honda_accord_s2t_2018_can_generated.dbc'
+    signals += [("DRIVERS_DOOR_OPEN", "SCM_FEEDBACK", 1)]
   else:
     signals += [("DOOR_OPEN_FL", "DOORS_STATUS", 1),
                 ("DOOR_OPEN_FR", "DOORS_STATUS", 1),
@@ -224,11 +225,11 @@ class CarState(object):
 
     # ******************* parse out can *******************
     if self.CP.carFingerprint in (CAR.ACCORD):
-      self.door_all_closed = 1
+      self.door_all_closed = not cp.vl["SCM_FEEDBACK"]['DRIVERS_DOOR_OPEN']
     else:
       self.door_all_closed = not any([cp.vl["DOORS_STATUS"]['DOOR_OPEN_FL'], cp.vl["DOORS_STATUS"]['DOOR_OPEN_FR'],
                                       cp.vl["DOORS_STATUS"]['DOOR_OPEN_RL'], cp.vl["DOORS_STATUS"]['DOOR_OPEN_RR']])
-      self.seatbelt = not cp.vl["SEATBELT_STATUS"]['SEATBELT_DRIVER_LAMP'] and cp.vl["SEATBELT_STATUS"]['SEATBELT_DRIVER_LATCHED']
+    self.seatbelt = not cp.vl["SEATBELT_STATUS"]['SEATBELT_DRIVER_LAMP'] and cp.vl["SEATBELT_STATUS"]['SEATBELT_DRIVER_LATCHED']
 
     # 2 = temporary 3= TBD 4 = temporary, hit a bump 5 (permanent) 6 = temporary 7 (permanent)
     # TODO: Use values from DBC to parse this field
@@ -299,6 +300,7 @@ class CarState(object):
       self.steer_override = abs(cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']) > 1200
     self.steer_torque_driver = cp.vl["STEER_STATUS"]['STEER_TORQUE_SENSOR']
 
+    self.brake_switch = cp.vl["POWERTRAIN_DATA"]['BRAKE_SWITCH']
     if self.CP.carFingerprint in (CAR.CRV_5G, CAR.ACCORD, CAR.CIVIC_HATCH):
       self.cruise_speed_offset = calc_cruise_offset(0, self.v_ego)
       if self.CP.carFingerprint == CAR.CIVIC_HATCH:
@@ -324,7 +326,6 @@ class CarState(object):
                          cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH'] != self.brake_switch_ts)
       self.brake_switch_prev = self.brake_switch
       self.brake_switch_ts = cp.ts["POWERTRAIN_DATA"]['BRAKE_SWITCH']
-
 
     self.user_brake = cp.vl["VSA_STATUS"]['USER_BRAKE']
     self.standstill = not cp.vl["STANDSTILL"]['WHEELS_MOVING']
