@@ -202,7 +202,7 @@ def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM
 
 
 def state_control(plan, CS, CP, state, events, v_cruise_kph, v_cruise_kph_last, AM, rk,
-                  awareness_status, PL, LaC, LoC, VM, angle_offset, rear_view_allowed, 
+                  awareness_status, PL, LaC, LoC, VM, angle_offset, rear_view_allowed,
                   rear_view_toggle, passive):
   # Given the state, this function returns the actuators
 
@@ -257,9 +257,9 @@ def state_control(plan, CS, CP, state, events, v_cruise_kph, v_cruise_kph_last, 
                                       CS.steeringPressed)
 
   # *** gas/brake PID loop ***
-  actuators.gas, actuators.brake = LoC.update(active, CS.vEgo, CS.brakePressed, CS.standstill, CS.cruiseState.standstill,
-                                              v_cruise_kph, plan.vTarget, plan.vTargetFuture, plan.aTarget,
-                                              CP, PL.lead_1)
+  # actuators.gas, actuators.brake = LoC.update(active, CS.vEgo, CS.brakePressed, CS.standstill, CS.cruiseState.standstill,
+  #                                             v_cruise_kph, plan.vTarget, plan.vTargetFuture, plan.aTarget,
+  #                                             CP, PL.lead_1)
 
   # *** steering PID loop ***
   actuators.steer, actuators.steerAngle = LaC.update(active, CS.vEgo, CS.steeringAngle,
