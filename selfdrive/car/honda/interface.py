@@ -158,7 +158,7 @@ class CarInterface(object):
 
     # FIXME: hardcoding honda civic 2016 touring params so they can be used to
     # scale unknown params for other cars
-    mass_civic = 2923./2.205 + std_cargo
+    mass_civic = 2923 * CV.LB_TO_KG + std_cargo
     wheelbase_civic = 2.70
     centerToFront_civic = wheelbase_civic * 0.4
     centerToRear_civic = wheelbase_civic - centerToFront_civic
@@ -183,7 +183,7 @@ class CarInterface(object):
       ret.longitudinalKiV = [0.54, 0.36]
     elif candidate == CAR.CIVIC_HATCH:
       stop_and_go = True
-      ret.mass = 2961./2.205 + std_cargo
+      ret.mass = 2961. * CV.LB_TO_KG + std_cargo
       ret.wheelbase = wheelbase_civic
       ret.centerToFront = centerToFront_civic
       ret.steerRatio = 13.0
@@ -196,7 +196,7 @@ class CarInterface(object):
     elif candidate == CAR.ACCORD:
       stop_and_go = True
       ret.safetyParam = 1 # Informs fw that this car uses an alternate user brake msg
-      ret.mass = 3298./2.205 + std_cargo
+      ret.mass = 3298. * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.67
       ret.centerToFront = ret.wheelbase * 0.39
       ret.steerRatio = 11.82
@@ -208,7 +208,7 @@ class CarInterface(object):
       ret.longitudinalKiV = [0.18, 0.12]
     elif candidate == CAR.ACURA_ILX:
       stop_and_go = False
-      ret.mass = 3095./2.205 + std_cargo
+      ret.mass = 3095 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.67
       ret.centerToFront = ret.wheelbase * 0.37
       ret.steerRatio = 15.3
@@ -222,7 +222,7 @@ class CarInterface(object):
       ret.longitudinalKiV = [0.18, 0.12]
     elif candidate == CAR.CRV:
       stop_and_go = False
-      ret.mass = 3572./2.205 + std_cargo
+      ret.mass = 3572 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.62
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 15.3
@@ -234,7 +234,7 @@ class CarInterface(object):
       ret.longitudinalKiV = [0.18, 0.12]
     elif candidate == CAR.CRV_5G:
       stop_and_go = True
-      ret.mass = 3358./2.205 + std_cargo
+      ret.mass = 3358. * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.67
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 12.30
@@ -246,7 +246,7 @@ class CarInterface(object):
       ret.longitudinalKiV = [0.18, 0.12]
     elif candidate == CAR.ACURA_RDX:
       stop_and_go = False
-      ret.mass = 3935./2.205 + std_cargo
+      ret.mass = 3935 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.68
       ret.centerToFront = ret.wheelbase * 0.38
       ret.steerRatio = 15.0
@@ -258,7 +258,7 @@ class CarInterface(object):
       ret.longitudinalKiV = [0.18, 0.12]
     elif candidate == CAR.ODYSSEY:
       stop_and_go = False
-      ret.mass = 4354./2.205 + std_cargo
+      ret.mass = 4354 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 3.00
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 14.35
@@ -270,7 +270,7 @@ class CarInterface(object):
       ret.longitudinalKiV = [0.18, 0.12]
     elif candidate == CAR.PILOT:
       stop_and_go = False
-      ret.mass = 4303./2.205 + std_cargo
+      ret.mass = 4303 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.81
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 16.0
@@ -283,7 +283,7 @@ class CarInterface(object):
     elif candidate == CAR.RIDGELINE:
       stop_and_go = False
       ts_factor = 1.4
-      ret.mass = 4515./2.205 + std_cargo
+      ret.mass = 4515 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 3.18
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 15.59
