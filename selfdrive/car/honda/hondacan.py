@@ -104,9 +104,10 @@ def create_ui_commands(packer, pcm_speed, hud, car_fingerprint, idx):
   }
   commands.append(packer.make_can_msg('LKAS_HUD', bus, lkas_hud_values, idx))
 
-  if car_fingerprint in (CAR.CIVIC, CAR.ODYSSEY):
+  if car_fingerprint in (CAR.CIVIC, CAR.ODYSSEY, CAR.ODYSSEY_CHINA):
     commands.append(packer.make_can_msg('HIGHBEAM_CONTROL', 0, {'HIGHBEAMS_ON': False}, idx))
 
+  if car_fingerprint in (CAR.CIVIC, CAR.ODYSSEY):
     radar_hud_values = {
       'ACC_ALERTS': hud.acc_alert,
       'LEAD_SPEED': 0x1fe,  # What are these magic values
