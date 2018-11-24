@@ -53,13 +53,14 @@ def radard_thread(gctx=None):
   # wait for stats about the car to come in from controls
   cloudlog.info("radard is waiting for CarParams")
   CP = car.CarParams.from_bytes(Params().get("CarParams", block=True))
-  mocked = CP.carName == "mock"
+  carName = "mock" # CP.carName
+  mocked = carName == "mock"
   VM = VehicleModel(CP)
   cloudlog.info("radard got CarParams")
 
   # import the radar from the fingerprint
-  cloudlog.info("radard is importing %s", CP.carName)
-  RadarInterface = importlib.import_module('selfdrive.car.%s.radar_interface' % CP.carName).RadarInterface
+  cloudlog.info("radard is importing %s", carName)
+  RadarInterface = importlib.import_module('selfdrive.car.%s.radar_interface' % carName).RadarInterface
   context = zmq.Context()
 
   # *** subscribe to features and model from visiond
