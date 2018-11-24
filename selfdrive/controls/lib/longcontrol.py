@@ -110,9 +110,8 @@ class LongControl(object):
     elif self.long_control_state == LongCtrlState.stopping:
       # Keep applying brakes until the car is stopped
       if standstill:
-        # TODO: bosch radar sends max once stopped, ok for all vehicles?
         output_gb = -1.
-      elif output_gb > -BRAKE_STOPPING_TARGET:
+      else: # TODO: why stop at BRAKE_STOPPING_TARGET ??? bosch sends specific value when stopped
         output_gb -= STOPPING_BRAKE_RATE / RATE
       output_gb = clip(output_gb, -brake_max, gas_max)
 
