@@ -69,9 +69,10 @@ def create_acc_commands(packer, enabled, accel, idx):
   # 17 = no gas
   # 31 = ?!?!
   state_flag = 0 if enabled and accel > 0 else 17
-  # 0 to +1628? = range
+  # 0 to +2000? = range
   # 720 = no gas
-  gas_command = int(accel) if enabled and accel > 0 else 720
+  # (scale from a max of 800 to 2000)
+  gas_command = int(accel * 2.5) if enabled and accel > 0 else 720
   # 1 = brake
   # 0 = no brake
   braking_flag = 1 if enabled and accel < 0 else 0
