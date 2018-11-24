@@ -112,7 +112,7 @@ class LongControl(object):
       if standstill:
         # TODO: bosch radar sends max once stopped, ok for all vehicles?
         output_gb = -1.
-      if not standstill or output_gb > -BRAKE_STOPPING_TARGET:
+      elif output_gb > -BRAKE_STOPPING_TARGET:
         output_gb -= STOPPING_BRAKE_RATE / RATE
       output_gb = clip(output_gb, -brake_max, gas_max)
 
