@@ -78,7 +78,6 @@ def create_acc_commands(packer, enabled, accel, idx):
   braking_flag = 1 if enabled and accel < 0 else 0
   # -1599 to +800? = range
   # 0 = no accel
-  # extra bit to hold stopped behind vehicle?
   gas_brake = int(accel) if enabled else 0
 
   acc_control_values = {
