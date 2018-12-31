@@ -83,6 +83,7 @@ def get_can_signals(CP):
     # TODO: why were these removed from bosch?
     signals += [("BRAKE_ERROR_1", "STANDSTILL", 1),
                 ("BRAKE_ERROR_2", "STANDSTILL", 1)]
+    checks += [("STANDSTILL", 50)]
 
   else:
     # Nidec signals.
