@@ -61,7 +61,8 @@ class RadarInterface(object):
       cpt = self.rcp.vl[ii]
       if ii == 0x400:
         # check for radar faults
-        self.radar_fault = cpt['RADAR_STATE'] != 0x79
+        # TODO: fix - overlaps with another message on 0x400
+        #self.radar_fault = cpt['RADAR_STATE'] != 0x79
         self.radar_wrong_config = cpt['RADAR_STATE'] == 0x69
       elif cpt['LONG_DIST'] < 255:
         if ii not in self.pts or cpt['NEW_TRACK']:
