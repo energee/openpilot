@@ -23,6 +23,17 @@ ifeq ($(CEREAL_LIBS),)
   CEREAL_LIBS = -L$(PHONELIBS)/capnp-cpp/x64/lib/ \
                 -L$(PHONELIBS)/capnp-c/x64/lib/ \
                 -l:libcapnp.a -l:libkj.a -l:libcapnp_c.a
+
+endif
+
+else ifeq ($(UNAME_M),armv7l)
+
+CEREAL_CXXFLAGS = -I$(PHONELIBS)/capnp-cpp/include
+ifeq ($(CEREAL_LIBS),)
+  CEREAL_LIBS = -L$(PHONELIBS)/capnp-cpp/armv7l/lib/ \
+                -L$(PHONELIBS)/capnp-c/armv7l/lib/ \
+                -l:libcapnp.a -l:libcapnpc.a -l:libkj.a
+
 endif
 
 else
