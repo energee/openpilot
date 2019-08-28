@@ -8,7 +8,7 @@ Welcome to openpilot
 The openpilot codebase has been written to be concise and to enable rapid prototyping. We look forward to your contributions - improving real vehicle automation has never been easier.
 
 Table of Contents
-=======================
+======================
 
 * [Community](#community)
 * [Hardware](#hardware)
