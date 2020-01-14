@@ -3,5 +3,8 @@ sudo: required
 services:
   - docker
 
+before_install:
+  - ./exit_early.sh
+
 script:
   - ./run_docker_tests.sh
