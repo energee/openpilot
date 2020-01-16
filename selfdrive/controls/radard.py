@@ -184,6 +184,7 @@ def radard_thread(sm=None, pm=None, can_sock=None):
   # wait for stats about the car to come in from controls
   cloudlog.info("radard is waiting for CarParams")
   CP = car.CarParams.from_bytes(Params().get("CarParams", block=True))
+  mocked = True #CP.carName == "mock"
   cloudlog.info("radard got CarParams")
 
   # import the radar from the fingerprint
@@ -205,7 +206,7 @@ def radard_thread(sm=None, pm=None, can_sock=None):
   rk = Ratekeeper(1.0 / CP.radarTimeStep, print_delay_threshold=None)
   RD = RadarD(CP.radarTimeStep, RI.delay)
 
-  has_radar = not CP.radarOffCan
+  has_radar = CP.openpilotLongitudinalControl
 
   while 1:
     can_strings = messaging.drain_sock_raw(can_sock, wait_for_one=True)

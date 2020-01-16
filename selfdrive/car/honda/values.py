@@ -22,7 +22,8 @@ VISUAL_HUD = {
   VisualAlert.speedTooHigh: 8}
 
 class ECU:
-  CAM = Ecu.fwdCamera
+  CAM = 0
+  RADAR = 1
 
 class CAR:
   ACCORD = "HONDA ACCORD 2018 SPORT 2T"
@@ -211,6 +212,7 @@ SPEED_FACTOR = {
 # those messages are mutually exclusive on CRV and non-CRV cars
 ECU_FINGERPRINT = {
   ECU.CAM: [0xE4, 0x194],   # steer torque cmd
+  ECU.RADAR: [0xE4, 0x1DF, 0x1EF, 0x30C, 0x33D, 0x39F],
 }
 
 HONDA_BOSCH = [CAR.ACCORD, CAR.ACCORD_15, CAR.ACCORDH, CAR.CIVIC_BOSCH, CAR.CRV_5G, CAR.CRV_HYBRID]

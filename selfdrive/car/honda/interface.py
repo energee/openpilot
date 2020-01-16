@@ -18,6 +18,7 @@ A_ACC_MAX = max(_A_CRUISE_MAX_V_FOLLOWING)
 ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
 
+# TODO: adjust for bosch to prevent jerky creeping
 def compute_gb_honda(accel, speed):
   creep_brake = 0.0
   creep_speed = 2.3
@@ -143,12 +144,14 @@ class CarInterface(CarInterfaceBase):
       rdr_bus = 0 if has_relay else 2
       ret.enableCamera = is_ecu_disconnected(fingerprint[rdr_bus], FINGERPRINTS, ECU_FINGERPRINT, candidate, ECU.CAM) or has_relay
       ret.radarOffCan = True
-      ret.openpilotLongitudinalControl = False
+      ret.openpilotLongitudinalControl = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, ECU.RADAR)
+      ret.enableCruise = not ret.openpilotLongitudinalControl
     else:
       ret.safetyModel = car.CarParams.SafetyModel.hondaNidec
       ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, ECU.CAM) or has_relay
       ret.enableGasInterceptor = 0x201 in fingerprint[0]
       ret.openpilotLongitudinalControl = ret.enableCamera
+      ret.enableCruise = not ret.enableGasInterceptor
 
     cloudlog.warning("ECU Camera Simulated: %r", ret.enableCamera)
     cloudlog.warning("ECU Gas Interceptor: %r", ret.enableGasInterceptor)
@@ -358,7 +361,8 @@ class CarInterface(CarInterfaceBase):
     ret.steerMaxV = [1.]   # max steer allowed
 
     ret.gasMaxBP = [0.]  # m/s
-    ret.gasMaxV = [0.6] if ret.enableGasInterceptor else [0.] # max gas allowed
+    # TODO: what is the correct way to handle this?
+    ret.gasMaxV = [1.] #if ret.enableGasInterceptor else [0.] # max gas allowed
     ret.brakeMaxBP = [5., 20.]  # m/s
     ret.brakeMaxV = [1., 0.8]   # max brake allowed
 
@@ -508,7 +512,7 @@ class CarInterface(CarInterfaceBase):
       events.append(create_event('wrongCarMode', [ET.NO_ENTRY, ET.USER_DISABLE]))
     if ret.gearShifter == GearShifter.reverse:
       events.append(create_event('reverseGear', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
-    if self.CS.brake_hold and self.CS.CP.carFingerprint not in HONDA_BOSCH:
+    if self.CS.brake_hold and self.CS.CP.openpilotLongitudinalControl:
       events.append(create_event('brakeHold', [ET.NO_ENTRY, ET.USER_DISABLE]))
     if self.CS.park_brake:
       events.append(create_event('parkBrake', [ET.NO_ENTRY, ET.USER_DISABLE]))

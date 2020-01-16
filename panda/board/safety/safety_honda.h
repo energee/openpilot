@@ -31,6 +31,8 @@ int honda_brake = 0;
 int honda_gas_prev = 0;
 bool honda_brake_pressed_prev = false;
 bool honda_moving = false;
+int honda_speed = 0;
+bool honda_bosch_hardware = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 enum {HONDA_N_HW, HONDA_BG_HW, HONDA_BH_HW} honda_hw = HONDA_N_HW;
@@ -83,6 +85,7 @@ static int honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x158) {
       // first 2 bytes
       honda_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
+      honda_speed = (GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1);
     }
 
     // state machine to enter and exit controls
@@ -198,7 +201,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
                       (honda_brake_pressed_prev && honda_moving);
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
-  // BRAKE: safety check
+  // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == 0)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3);
     if (!current_controls_allowed) {
@@ -213,6 +216,22 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       tx = 0;
     }
   }
+  // BRAKE: safety check (bosch)
+  if (addr == 0x1DF) {
+    int gas_brake = (GET_BYTE(to_send, 3) << 4) + (GET_BYTE(to_send, 4) & 0x15);
+    gas_brake = to_signed(gas_brake, 12);
+    if (!current_controls_allowed || !long_controls_allowed) {
+      if (gas_brake != 0) {
+        tx = 0;
+      }
+    }
+    // TODO: STANDSTILL bit dangerous to be set when moving?
+    // TODO: -400 is a safe max? if not, need to allow it when not moving
+    //if (honda_speed > 100 && gas_brake < -400) {
+    if (gas_brake < -400) {
+      tx = 0;
+    }
+  }
 
   // STEER: safety check
   if ((addr == 0xE4) || (addr == 0x194)) {
@@ -224,10 +243,20 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
   }
 
-  // GAS: safety check
+  // GAS: safety check (nidec)
   if (addr == 0x200) {
     if (!current_controls_allowed) {
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
+        tx = 0;
+      }
+    }
+  }
+  // GAS: safety check (bosch)
+  if (addr == 0x1DF) {
+    int gas = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
+    gas = to_signed(gas, 16);
+    if (!current_controls_allowed || !long_controls_allowed) {
+      if (gas != -30000) {
         tx = 0;
       }
     }

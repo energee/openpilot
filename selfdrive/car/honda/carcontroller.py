@@ -5,10 +5,36 @@ from selfdrive.controls.lib.drive_helpers import rate_limit
 from common.numpy_fast import clip
 from selfdrive.car import create_gas_command
 from selfdrive.car.honda import hondacan
-from selfdrive.car.honda.values import CruiseButtons, CAR, VISUAL_HUD
+from selfdrive.car.honda.values import CruiseButtons, CAR, HONDA_BOSCH, VISUAL_HUD
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
+
+# Accel limits
+ACCEL_HYST_GAP = 0.02 # don't change accel command for small oscilalitons within this value
+ACCEL_MAX = 4.
+ACCEL_MIN = -4.
+ACCEL_SCALE = max(ACCEL_MAX, -ACCEL_MIN)
+
+def accel_hysteresis(accel, accel_steady, enabled, v_ego):
+
+  # for small accel oscillations within ACCEL_HYST_GAP, don't change the accel command
+  if not enabled:
+    # send 0 when disabled, otherwise acc faults
+    accel_steady = 0.
+  elif abs(accel) == 1:
+    # send max when max is hit (otherwise you never reach max)
+    accel_steady = accel
+  elif accel < 0 and v_ego <= 0:
+    # immediately drop to -1 once stopped
+    accel_steady = -1.0
+  elif accel > accel_steady + ACCEL_HYST_GAP:
+    accel_steady = accel - ACCEL_HYST_GAP
+  elif accel < accel_steady - ACCEL_HYST_GAP:
+    accel_steady = accel + ACCEL_HYST_GAP
+  accel = accel_steady
+
+  return accel, accel_steady
 
 def actuator_hystereses(brake, braking, brake_steady, v_ego, car_fingerprint):
   # hyst params
@@ -82,6 +108,7 @@ class CarController():
     self.brake_last = 0.
     self.apply_brake_last = 0
     self.last_pump_ts = 0.
+    self.accel_steady = 0.
     self.packer = CANPacker(dbc_name)
     self.new_radar_config = False
     self.eps_modified = False
@@ -139,6 +166,11 @@ class CarController():
     else:
       STEER_MAX = 0x1000
 
+    # gas and brake
+    apply_accel = actuators.gas - actuators.brake
+    apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady, enabled, CS.v_ego)
+    apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, ACCEL_MAX)
+
     # steer torque is converted back to CAN reference (positive when steering right)
     apply_gas = clip(actuators.gas, 0., 1.)
     apply_brake = int(clip(self.brake_last * BRAKE_MAX, 0, BRAKE_MAX - 1))
@@ -158,14 +190,14 @@ class CarController():
     # Send steering command.
     idx = frame % 4
     can_sends.append(hondacan.create_steering_control(self.packer, apply_steer,
-      lkas_active, CS.CP.carFingerprint, idx, CS.CP.isPandaBlack))
+      lkas_active, CS.CP.carFingerprint, CS.CP.openpilotLongitudinalControl, idx, CS.CP.isPandaBlack))
 
     # Send dashboard UI commands.
     if (frame % 10) == 0:
       idx = (frame//10) % 4
-      can_sends.extend(hondacan.create_ui_commands(self.packer, pcm_speed, hud, CS.CP.carFingerprint, CS.is_metric, idx, CS.CP.isPandaBlack, CS.stock_hud))
+      can_sends.extend(hondacan.create_ui_commands(self.packer, pcm_speed, hud, CS.CP.carFingerprint, CS.CP.openpilotLongitudinalControl, CS.is_metric, idx, CS.CP.isPandaBlack, CS.stock_hud))
 
-    if CS.CP.radarOffCan:
+    if not CS.CP.openpilotLongitudinalControl:
       # If using stock ACC, spam cancel command to kill gas when OP disengages.
       if pcm_cancel_cmd:
         can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.CANCEL, idx, CS.CP.carFingerprint, CS.CP.isPandaBlack))
@@ -177,10 +209,13 @@ class CarController():
       if (frame % 2) == 0:
         idx = frame // 2
         ts = frame * DT_CTRL
-        pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
-        can_sends.append(hondacan.create_brake_command(self.packer, apply_brake, pump_on,
-          pcm_override, pcm_cancel_cmd, hud.fcw, idx, CS.CP.carFingerprint, CS.CP.isPandaBlack, CS.stock_brake))
-        self.apply_brake_last = apply_brake
+        if CS.CP.carFingerprint in HONDA_BOSCH:
+          can_sends.extend(hondacan.create_acc_commands(self.packer, enabled, apply_accel, idx, CS.v_ego, CS.CP.carFingerprint, CS.CP.isPandaBlack))
+        else:
+          pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
+          can_sends.append(hondacan.create_brake_command(self.packer, apply_brake, pump_on,
+            pcm_override, pcm_cancel_cmd, hud.fcw, idx, CS.CP.carFingerprint, CS.CP.isPandaBlack, CS.stock_brake))
+          self.apply_brake_last = apply_brake
 
         if CS.CP.enableGasInterceptor:
           # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
